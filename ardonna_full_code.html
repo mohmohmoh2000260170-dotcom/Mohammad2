@@ -1,0 +1,3510 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a5f4a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>أردننا - دليل الأردن السياحي</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --primary: #1a5f4a;
+            --primary-dark: #0d3d2e;
+            --primary-light: #2d8a6e;
+            --secondary: #c9a84c;
+            --secondary-light: #e8d5a3;
+            --accent: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --info: #3498db;
+            --bg: #f8f9fa;
+            --card: #ffffff;
+            --text: #2c3e50;
+            --text-light: #7f8c8d;
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+            --radius: 16px;
+            --radius-sm: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            padding-bottom: 80px;
+        }
+
+        /* Splash Screen */
+        #splash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        #splash.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .splash-logo {
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.2);
+            animation: pulse 2s infinite;
+        }
+
+        .splash-logo i { font-size: 50px; color: white; }
+        .splash-title { color: white; font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+        .splash-subtitle { color: rgba(255,255,255,0.7); font-size: 16px; font-weight: 400; }
+        .splash-loader { margin-top: 30px; width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top-color: var(--secondary); border-radius: 50%; animation: spin 1s linear infinite; }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+
+        /* Header */
+        .app-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 20px;
+            padding-top: 50px;
+            border-radius: 0 0 30px 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-title { color: white; font-size: 24px; font-weight: 800; }
+
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+        }
+
+        .search-box {
+            background: rgba(255,255,255,0.15);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .search-box input {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 15px;
+            width: 100%;
+            outline: none;
+        }
+
+        .search-box input::placeholder { color: rgba(255,255,255,0.6); }
+        .search-box i { color: rgba(255,255,255,0.7); }
+
+        /* Categories */
+        .categories-section { padding: 20px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .section-title { font-size: 20px; font-weight: 700; color: var(--text); }
+        .see-all { color: var(--primary); font-size: 14px; font-weight: 600; cursor: pointer; }
+
+        .categories-scroll {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: none;
+        }
+
+        .categories-scroll::-webkit-scrollbar { display: none; }
+
+        .category-card {
+            min-width: 100px;
+            background: var(--card);
+            border-radius: var(--radius-sm);
+            padding: 15px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .category-card.active { background: var(--primary); color: white; border-color: var(--primary-dark); }
+        .category-card.active .cat-icon { background: rgba(255,255,255,0.2); color: white; }
+        .category-card.active .cat-name { color: white; }
+
+        .cat-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--bg);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-size: 22px;
+            color: var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        .cat-name { font-size: 13px; font-weight: 600; color: var(--text); }
+
+        /* Featured */
+        .featured-section { padding: 0 20px 20px; }
+        .featured-scroll { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .featured-scroll::-webkit-scrollbar { display: none; }
+
+        .featured-card {
+            min-width: 280px;
+            height: 200px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            position: relative;
+            box-shadow: var(--shadow-lg);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .featured-card:active { transform: scale(0.98); }
+        .featured-card img { width: 100%; height: 100%; object-fit: cover; }
+
+        .featured-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white;
+        }
+
+        .featured-badge {
+            display: inline-block;
+            background: var(--secondary);
+            color: var(--primary-dark);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .featured-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+        .featured-location { font-size: 13px; opacity: 0.8; display: flex; align-items: center; gap: 5px; }
+
+        /* Places Grid */
+        .places-section { padding: 0 20px 20px; }
+        .places-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        .place-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .place-card:active { transform: scale(0.95); }
+        .place-image { width: 100%; height: 140px; object-fit: cover; display: block; }
+        .place-info { padding: 12px; }
+        .place-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--text); }
+        .place-location { font-size: 12px; color: var(--text-light); display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+        .place-meta { display: flex; justify-content: space-between; align-items: center; }
+        .place-rating { display: flex; align-items: center; gap: 3px; font-size: 13px; font-weight: 600; color: var(--secondary); }
+        .place-price { font-size: 14px; font-weight: 700; color: var(--primary); }
+        .place-price span { font-size: 11px; color: var(--text-light); font-weight: 400; }
+
+        /* Road Difficulty Badge */
+        .road-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .road-easy { background: #d4edda; color: #155724; }
+        .road-medium { background: #fff3cd; color: #856404; }
+        .road-hard { background: #f8d7da; color: #721c24; }
+
+        /* Best Time Badge */
+        .best-time-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: var(--info);
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        /* Hotels Section */
+        .hotels-section { padding: 0 20px 20px; }
+        .hotel-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-bottom: 15px;
+            display: flex;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .hotel-card:active { transform: scale(0.98); }
+        .hotel-image { width: 120px; height: 120px; object-fit: cover; }
+        .hotel-info { padding: 15px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .hotel-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .hotel-location { font-size: 12px; color: var(--text-light); display: flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+        .hotel-stars { color: var(--secondary); font-size: 12px; margin-bottom: 8px; }
+        .hotel-bottom { display: flex; justify-content: space-between; align-items: center; }
+        .hotel-rating { background: var(--primary); color: white; padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 700; }
+        .hotel-price { font-size: 18px; font-weight: 800; color: var(--primary); }
+        .hotel-price span { font-size: 12px; color: var(--text-light); font-weight: 400; }
+
+        /* Map Styles */
+        #map { 
+            height: 60vh; 
+            width: 100%; 
+            border-radius: var(--radius);
+            z-index: 1;
+        }
+
+        .map-container {
+            padding: 0 20px 20px;
+        }
+
+        .map-info-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .map-info-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .map-info-title i { color: var(--primary); }
+
+        .route-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .route-item:last-child { border-bottom: none; }
+
+        .route-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .route-icon.easy { background: #d4edda; color: var(--success); }
+        .route-icon.medium { background: #fff3cd; color: var(--warning); }
+        .route-icon.hard { background: #f8d7da; color: var(--danger); }
+
+        .route-details { flex: 1; }
+        .route-name { font-weight: 700; margin-bottom: 4px; }
+        .route-info { font-size: 13px; color: var(--text-light); }
+
+        .difficulty-legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.easy { background: var(--success); }
+        .legend-dot.medium { background: var(--warning); }
+        .legend-dot.hard { background: var(--danger); }
+
+        /* Detail Page */
+        .detail-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            z-index: 200;
+            overflow-y: auto;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .detail-page.active { display: block; }
+
+        .detail-header { position: relative; height: 350px; }
+        .detail-header img { width: 100%; height: 100%; object-fit: cover; }
+
+        .detail-header-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            padding-top: 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .back-btn, .share-btn, .edit-btn, .delete-btn {
+            width: 45px;
+            height: 45px;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:active, .share-btn:active, .edit-btn:active, .delete-btn:active { transform: scale(0.9); background: rgba(0,0,0,0.6); }
+        .detail-actions { display: flex; gap: 10px; }
+
+        .detail-content {
+            background: var(--bg);
+            border-radius: 30px 30px 0 0;
+            margin-top: -30px;
+            position: relative;
+            z-index: 10;
+            padding: 25px;
+        }
+
+        .detail-title { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+        .detail-location { display: flex; align-items: center; gap: 6px; color: var(--text-light); font-size: 15px; margin-bottom: 15px; }
+        .detail-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .detail-tag { background: var(--primary-light); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+
+        .detail-price-box {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: var(--radius);
+            padding: 20px;
+            color: white;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .price-label { font-size: 14px; opacity: 0.8; }
+        .price-value { font-size: 28px; font-weight: 800; }
+        .price-value span { font-size: 14px; font-weight: 400; opacity: 0.8; }
+
+        .detail-section { margin-bottom: 25px; }
+        .detail-section-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .detail-section-title i { color: var(--primary); }
+        .detail-description { font-size: 15px; line-height: 1.8; color: var(--text-light); text-align: justify; }
+
+        .detail-features { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .feature-item { background: var(--card); padding: 12px; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 10px; font-size: 14px; }
+        .feature-item i { color: var(--primary); font-size: 18px; }
+
+        .detail-gallery { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .detail-gallery::-webkit-scrollbar { display: none; }
+        .gallery-item { min-width: 150px; height: 100px; border-radius: var(--radius-sm); overflow: hidden; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Best Time Box */
+        .best-time-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #bbdefb;
+        }
+
+        .best-time-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .best-time-header i { font-size: 24px; color: var(--info); }
+        .best-time-title { font-size: 18px; font-weight: 700; color: var(--info); }
+        .best-time-content { font-size: 14px; line-height: 1.8; color: var(--text); }
+        .best-time-months { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+        .month-tag {
+            background: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--info);
+            border: 1px solid #bbdefb;
+        }
+
+        /* Road Info Box */
+        .road-info-box {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .road-info-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .road-info-header i { font-size: 24px; }
+        .road-info-header.easy i { color: var(--success); }
+        .road-info-header.medium i { color: var(--warning); }
+        .road-info-header.hard i { color: var(--danger); }
+
+        .road-info-title { font-size: 18px; font-weight: 700; }
+        .road-info-desc { font-size: 14px; color: var(--text-light); line-height: 1.6; }
+
+        /* Booking Links Box */
+        .booking-box {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid var(--secondary-light);
+        }
+
+        .booking-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .booking-header i { font-size: 24px; color: var(--secondary); }
+        .booking-title { font-size: 18px; font-weight: 700; color: var(--primary-dark); }
+
+        .booking-links { display: flex; flex-direction: column; gap: 10px; }
+
+        .booking-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.3s ease;
+            border: 1px solid #eee;
+        }
+
+        .booking-link:active { transform: scale(0.98); background: var(--bg); }
+
+        .booking-link-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .booking-link-icon.ticket { background: #e3f2fd; color: var(--info); }
+        .booking-link-icon.hotel { background: #f3e5f5; color: #9c27b0; }
+        .booking-link-icon.tour { background: #e8f5e9; color: var(--success); }
+        .booking-link-icon.pass { background: #fff3e0; color: var(--warning); }
+        .booking-link-icon.official { background: #fce4ec; color: var(--danger); }
+
+        .booking-link-info { flex: 1; }
+        .booking-link-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+        .booking-link-desc { font-size: 12px; color: var(--text-light); }
+
+        .booking-link-arrow {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        /* Direction Map in Detail */
+        .direction-map {
+            width: 100%;
+            height: 250px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            z-index: 1;
+        }
+
+        .get-directions-btn {
+            background: var(--info);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: var(--radius);
+            font-size: 16px;
+            font-weight: 700;
+            width: 100%;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .get-directions-btn:active { transform: scale(0.98); }
+
+        .book-btn {
+            background: linear-gradient(135deg, var(--secondary) 0%, #b8941d 100%);
+            color: var(--primary-dark);
+            border: none;
+            padding: 16px;
+            border-radius: var(--radius);
+            font-size: 18px;
+            font-weight: 800;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(201,168,76,0.3);
+        }
+
+        .book-btn:active { transform: scale(0.98); }
+
+        /* Add/Edit Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 300;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-content {
+            background: var(--card);
+            width: 100%;
+            max-height: 90vh;
+            border-radius: 30px 30px 0 0;
+            padding: 25px;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 22px; font-weight: 800; }
+        .modal-close {
+            width: 40px;
+            height: 40px;
+            background: var(--bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            font-size: 18px;
+            color: var(--text);
+        }
+
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e9ecef;
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: var(--bg);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); background: white; }
+        .form-textarea { min-height: 100px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .image-preview {
+            width: 100%;
+            height: 200px;
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 10px;
+            color: var(--text-light);
+            margin-bottom: 15px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .image-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .image-preview.has-image .upload-placeholder { display: none; }
+
+        .upload-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-placeholder i { font-size: 40px; color: var(--primary-light); }
+        .submit-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: var(--radius);
+            font-size: 18px;
+            font-weight: 700;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:active { transform: scale(0.98); }
+        .delete-confirm-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: var(--radius);
+            font-size: 18px;
+            font-weight: 700;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* Password Modal */
+        .password-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .password-modal.active { display: flex; }
+
+        .password-box {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 30px;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+            animation: scaleIn 0.3s ease;
+        }
+
+        .password-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 36px;
+        }
+
+        .password-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+        .password-subtitle { font-size: 14px; color: var(--text-light); margin-bottom: 25px; }
+
+        .password-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e9ecef;
+            border-radius: var(--radius-sm);
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 8px;
+            outline: none;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .password-input:focus { border-color: var(--primary); }
+        .password-input.error { border-color: var(--danger); animation: shake 0.5s ease; }
+
+        .password-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: var(--radius);
+            font-size: 16px;
+            font-weight: 700;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .password-btn:active { transform: scale(0.98); }
+
+        .password-hint {
+            margin-top: 15px;
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+            z-index: 100;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            padding: 5px 15px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            color: var(--text-light);
+        }
+
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 22px; }
+        .nav-item span { font-size: 11px; font-weight: 600; }
+
+        .add-btn-nav {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            margin-top: -20px;
+            box-shadow: 0 4px 15px rgba(26,95,74,0.4);
+            cursor: pointer;
+            border: 3px solid var(--card);
+            transition: all 0.3s ease;
+        }
+
+        .add-btn-nav:active { transform: scale(0.9); }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--primary-dark);
+            color: white;
+            padding: 14px 24px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 400;
+            opacity: 0;
+            transition: all 0.4s ease;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast i { font-size: 18px; }
+
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px 20px; }
+        .stat-card { background: var(--card); border-radius: var(--radius); padding: 20px; text-align: center; box-shadow: var(--shadow); }
+        .stat-number { font-size: 28px; font-weight: 800; color: var(--primary); }
+        .stat-label { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-light); }
+        .empty-state i { font-size: 60px; margin-bottom: 15px; color: #ddd; }
+        .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+
+        /* Admin Badge */
+        .admin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, var(--secondary) 0%, #b8941d 100%);
+            color: var(--primary-dark);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 380px) {
+            .places-grid { grid-template-columns: 1fr; }
+            .hotel-card { flex-direction: column; }
+            .hotel-image { width: 100%; height: 180px; }
+        }
+
+        /* Leaflet popup customization */
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+            width: 200px !important;
+        }
+
+        .popup-content { text-align: center; }
+        .popup-content img { width: 100%; height: 120px; object-fit: cover; }
+        .popup-content .popup-title { padding: 10px; font-weight: 700; font-size: 14px; }
+        .popup-content .popup-price { padding: 0 10px 10px; color: var(--primary); font-weight: 600; font-size: 13px; }
+    </style>
+
+    <style>
+        /* Auth & Profile Styles */
+        #auth-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a5f4a 0%, #0d3d2e 100%);
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Tajawal', sans-serif;
+            padding: 20px;
+        }
+        #auth-overlay.hidden { display: none; }
+        .auth-logo {
+            width: 90px; height: 90px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 24px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px;
+            border: 2px solid rgba(255,255,255,0.25);
+        }
+        .auth-logo i { font-size: 40px; color: white; }
+        .auth-app-title { color: white; font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+        .auth-app-subtitle { color: rgba(255,255,255,0.65); font-size: 14px; margin-bottom: 30px; }
+        .auth-card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px 24px;
+            width: 100%; max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        .auth-card h2 { font-size: 22px; font-weight: 700; color: #1a5f4a; margin-bottom: 20px; text-align: center; }
+        .auth-field { margin-bottom: 14px; }
+        .auth-field label { display: block; font-size: 13px; font-weight: 600; color: #2c3e50; margin-bottom: 6px; }
+        .auth-field input {
+            width: 100%; padding: 12px 16px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 15px; font-family: 'Tajawal', sans-serif;
+            outline: none; transition: border-color 0.2s;
+            color: #2c3e50;
+        }
+        .auth-field input:focus { border-color: #1a5f4a; }
+        .auth-error { color: #e74c3c; font-size: 13px; margin-bottom: 10px; display: none; text-align: center; }
+        .auth-btn {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #1a5f4a, #0d3d2e);
+            color: white; border: none;
+            border-radius: 12px; font-size: 16px; font-weight: 700;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer; transition: opacity 0.2s;
+        }
+        .auth-btn:active { opacity: 0.85; }
+        .auth-toggle { text-align: center; margin-top: 16px; font-size: 14px; color: #7f8c8d; }
+        .auth-toggle a { color: #1a5f4a; font-weight: 600; cursor: pointer; text-decoration: none; }
+
+        /* Profile button in header */
+        .profile-header-btn {
+            width: 40px; height: 40px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 18px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.3);
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .profile-header-btn .avatar-initials {
+            font-size: 14px; font-weight: 700; color: white;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        /* Full Profile Page */
+        #profile-page {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            z-index: 9998;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+            font-family: 'Tajawal', sans-serif;
+            animation: slideIn 0.3s ease;
+        }
+        #profile-page.active { display: flex; }
+
+        .profile-page-header {
+            background: linear-gradient(135deg, #1a5f4a 0%, #0d3d2e 100%);
+            padding: 50px 20px 80px;
+            position: relative;
+            text-align: center;
+        }
+        .profile-back-btn {
+            position: absolute; top: 18px; right: 20px;
+            width: 40px; height: 40px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 18px; cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+        .profile-page-title {
+            color: white; font-size: 20px; font-weight: 700;
+            position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+        }
+        .profile-avatar-wrap {
+            position: relative; display: inline-block; margin-bottom: 12px;
+        }
+        .profile-avatar-xl {
+            width: 100px; height: 100px;
+            background: linear-gradient(135deg, #c9a84c, #e8d5a3);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; font-weight: 800; color: #0d3d2e;
+            border: 4px solid rgba(255,255,255,0.3);
+            margin: 0 auto;
+        }
+        .profile-edit-avatar-btn {
+            position: absolute; bottom: 0; left: 0;
+            width: 30px; height: 30px;
+            background: #c9a84c; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #0d3d2e; font-size: 13px; cursor: pointer;
+            border: 2px solid white;
+        }
+        .profile-display-name {
+            color: white; font-size: 22px; font-weight: 800; margin-bottom: 4px;
+        }
+        .profile-display-email {
+            color: rgba(255,255,255,0.65); font-size: 14px;
+        }
+        .profile-join-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8);
+            padding: 5px 14px; border-radius: 20px; font-size: 12px;
+            margin-top: 10px; border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .profile-body {
+            background: var(--bg);
+            border-radius: 28px 28px 0 0;
+            margin-top: -28px;
+            padding: 24px 20px 40px;
+            flex: 1;
+        }
+
+        .profile-section-card {
+            background: white;
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .profile-section-label {
+            font-size: 12px; font-weight: 700; color: #7f8c8d;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 14px;
+        }
+        .profile-info-row {
+            display: flex; align-items: center; gap: 14px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .profile-info-row:last-child { border-bottom: none; }
+        .profile-info-icon {
+            width: 38px; height: 38px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .profile-info-icon.green { background: #e8f5e9; color: #1a5f4a; }
+        .profile-info-icon.blue  { background: #e3f2fd; color: #2196f3; }
+        .profile-info-icon.gold  { background: #fff8e1; color: #c9a84c; }
+        .profile-info-icon.red   { background: #fce4ec; color: #e91e63; }
+        .profile-info-content { flex: 1; }
+        .profile-info-key { font-size: 11px; color: #7f8c8d; margin-bottom: 2px; }
+        .profile-info-val { font-size: 15px; font-weight: 600; color: #2c3e50; }
+        .profile-info-val.editable { color: #1a5f4a; }
+        .profile-info-edit-icon { color: #bdc3c7; font-size: 14px; cursor: pointer; }
+
+        /* Inline edit input */
+        .profile-edit-input {
+            width: 100%; padding: 10px 14px;
+            border: 1.5px solid #1a5f4a; border-radius: 10px;
+            font-size: 15px; font-family: 'Tajawal', sans-serif;
+            outline: none; color: #2c3e50; background: #f8fffe;
+        }
+        .profile-edit-actions {
+            display: flex; gap: 8px; margin-top: 8px;
+        }
+        .profile-save-btn {
+            flex: 1; padding: 10px;
+            background: #1a5f4a; color: white;
+            border: none; border-radius: 10px;
+            font-size: 14px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+        }
+        .profile-cancel-btn {
+            flex: 1; padding: 10px;
+            background: #f0f0f0; color: #7f8c8d;
+            border: none; border-radius: 10px;
+            font-size: 14px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+        }
+
+        .profile-logout-btn {
+            width: 100%; padding: 15px;
+            background: #fff0f0; color: #c0392b;
+            border: 1.5px solid #f8d7da; border-radius: 14px;
+            font-size: 15px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+            cursor: pointer; transition: opacity 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .profile-logout-btn:active { opacity: 0.8; }
+
+        /* ── Notifications Panel ── */
+        .notif-bell-wrap { position: relative; display: inline-flex; }
+        .notif-badge {
+            position: absolute; top: -6px; left: -6px;
+            width: 18px; height: 18px;
+            background: #e74c3c; color: white;
+            border-radius: 50%; font-size: 10px; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid #1a5f4a;
+            font-family: 'Tajawal', sans-serif;
+            display: none;
+        }
+        .notif-badge.show { display: flex; }
+
+        #notif-panel {
+            position: fixed; top: 0; right: 0; width: 100%; height: 100%;
+            z-index: 9997;
+            display: none;
+            font-family: 'Tajawal', sans-serif;
+        }
+        #notif-panel.active { display: block; }
+        .notif-backdrop {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.45);
+        }
+        .notif-sheet {
+            position: absolute; top: 0; right: 0;
+            width: min(340px, 92vw); height: 100%;
+            background: #f8f9fa;
+            box-shadow: -8px 0 30px rgba(0,0,0,0.15);
+            display: flex; flex-direction: column;
+            animation: slideFromRight 0.28s ease;
+        }
+        @keyframes slideFromRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        .notif-header {
+            background: linear-gradient(135deg, #1a5f4a, #0d3d2e);
+            padding: 50px 20px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .notif-title { color: white; font-size: 18px; font-weight: 700; }
+        .notif-header-actions { display: flex; gap: 10px; align-items: center; }
+        .notif-mark-all {
+            color: rgba(255,255,255,0.75); font-size: 12px; font-weight: 600;
+            cursor: pointer; background: rgba(255,255,255,0.1);
+            padding: 5px 10px; border-radius: 20px; border: none;
+            font-family: 'Tajawal', sans-serif;
+        }
+        .notif-close-btn {
+            width: 36px; height: 36px;
+            background: rgba(255,255,255,0.15); border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 16px; cursor: pointer; border: none;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .notif-list { flex: 1; overflow-y: auto; padding: 12px; }
+        .notif-empty {
+            text-align: center; padding: 60px 20px; color: #7f8c8d;
+        }
+        .notif-empty i { font-size: 48px; margin-bottom: 12px; color: #bdc3c7; display: block; }
+        .notif-empty p { font-size: 15px; }
+
+        .notif-item {
+            background: white; border-radius: 14px;
+            padding: 14px; margin-bottom: 10px;
+            display: flex; gap: 12px; align-items: flex-start;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            position: relative; transition: opacity 0.2s;
+        }
+        .notif-item.read { opacity: 0.6; background: #fafafa; }
+        .notif-icon-wrap {
+            width: 42px; height: 42px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .notif-icon-wrap.green  { background: #e8f5e9; color: #1a5f4a; }
+        .notif-icon-wrap.gold   { background: #fff8e1; color: #c9a84c; }
+        .notif-icon-wrap.blue   { background: #e3f2fd; color: #2196f3; }
+        .notif-icon-wrap.red    { background: #fce4ec; color: #e74c3c; }
+        .notif-icon-wrap.purple { background: #f3e5f5; color: #9c27b0; }
+
+        .notif-body { flex: 1; }
+        .notif-msg { font-size: 14px; font-weight: 600; color: #2c3e50; margin-bottom: 3px; }
+        .notif-sub { font-size: 12px; color: #7f8c8d; line-height: 1.5; }
+        .notif-time { font-size: 11px; color: #bdc3c7; margin-top: 5px; }
+        .notif-unread-dot {
+            width: 8px; height: 8px; background: #1a5f4a; border-radius: 50%;
+            position: absolute; top: 14px; left: 14px;
+        }
+        .notif-delete-btn {
+            position: absolute; top: 8px; left: 8px;
+            width: 24px; height: 24px;
+            background: #f8d7da; border-radius: 50%;
+            display: none; align-items: center; justify-content: center;
+            color: #c0392b; font-size: 10px; cursor: pointer; border: none;
+        }
+        .notif-item:hover .notif-delete-btn { display: flex; }
+        .notif-item:hover .notif-unread-dot { display: none; }
+    </style>
+
+</head>
+<body>
+
+    <!-- Auth Overlay -->
+    <div id="auth-overlay">
+        <div class="auth-logo"><i class="fas fa-map-marked-alt"></i></div>
+        <div class="auth-app-title">أردننا</div>
+        <div class="auth-app-subtitle">دليل الأردن السياحي</div>
+        <div class="auth-card">
+            <h2 id="auth-title">تسجيل الدخول</h2>
+            <div class="auth-field">
+                <label>البريد الإلكتروني</label>
+                <input type="email" id="auth-email" placeholder="example@email.com" dir="ltr">
+            </div>
+            <div class="auth-field">
+                <label>كلمة المرور</label>
+                <input type="password" id="auth-password" placeholder="••••••••" dir="ltr">
+            </div>
+            <div id="auth-confirm-field" class="auth-field" style="display:none">
+                <label>تأكيد كلمة المرور</label>
+                <input type="password" id="auth-confirm" placeholder="••••••••" dir="ltr">
+            </div>
+            <div class="auth-error" id="auth-error"></div>
+            <button class="auth-btn" onclick="authSubmit()">دخول</button>
+            <div class="auth-toggle">
+                <span id="auth-toggle-text">ليس لديك حساب؟</span>
+                <a onclick="toggleAuthMode()"> <span id="auth-toggle-link">إنشاء حساب</span></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Profile Page -->
+    <div id="profile-page">
+        <div class="profile-page-header">
+            <div class="profile-back-btn" onclick="closeProfilePage()">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+            <div class="profile-page-title">الملف الشخصي</div>
+            <div class="profile-avatar-wrap">
+                <div class="profile-avatar-xl" id="pp-avatar"></div>
+            </div>
+            <div class="profile-display-name" id="pp-display-name"></div>
+            <div class="profile-display-email" id="pp-display-email"></div>
+            <div class="profile-join-badge" id="pp-join-badge">
+                <i class="fas fa-calendar-alt"></i>
+                <span id="pp-join-date"></span>
+            </div>
+        </div>
+
+        <div class="profile-body">
+
+            <!-- Personal Info -->
+            <div class="profile-section-card">
+                <div class="profile-section-label">المعلومات الشخصية</div>
+
+                <!-- Name -->
+                <div class="profile-info-row" id="name-row">
+                    <div class="profile-info-icon green"><i class="fas fa-user"></i></div>
+                    <div class="profile-info-content">
+                        <div class="profile-info-key">الاسم الكامل</div>
+                        <div class="profile-info-val editable" id="pp-name-val">—</div>
+                    </div>
+                    <div class="profile-info-edit-icon" onclick="startEdit('name')">
+                        <i class="fas fa-pen"></i>
+                    </div>
+                </div>
+                <div id="name-edit-area" style="display:none; padding: 10px 0 4px;">
+                    <input class="profile-edit-input" id="name-input" type="text" placeholder="أدخل اسمك الكامل">
+                    <div class="profile-edit-actions">
+                        <button class="profile-save-btn" onclick="saveEdit('name')">حفظ</button>
+                        <button class="profile-cancel-btn" onclick="cancelEdit('name')">إلغاء</button>
+                    </div>
+                </div>
+
+                <!-- Phone -->
+                <div class="profile-info-row" id="phone-row">
+                    <div class="profile-info-icon blue"><i class="fas fa-phone"></i></div>
+                    <div class="profile-info-content">
+                        <div class="profile-info-key">رقم الهاتف</div>
+                        <div class="profile-info-val editable" id="pp-phone-val">—</div>
+                    </div>
+                    <div class="profile-info-edit-icon" onclick="startEdit('phone')">
+                        <i class="fas fa-pen"></i>
+                    </div>
+                </div>
+                <div id="phone-edit-area" style="display:none; padding: 10px 0 4px;">
+                    <input class="profile-edit-input" id="phone-input" type="tel" placeholder="+962 7X XXX XXXX" dir="ltr">
+                    <div class="profile-edit-actions">
+                        <button class="profile-save-btn" onclick="saveEdit('phone')">حفظ</button>
+                        <button class="profile-cancel-btn" onclick="cancelEdit('phone')">إلغاء</button>
+                    </div>
+                </div>
+
+                <!-- City -->
+                <div class="profile-info-row" id="city-row">
+                    <div class="profile-info-icon gold"><i class="fas fa-map-marker-alt"></i></div>
+                    <div class="profile-info-content">
+                        <div class="profile-info-key">المدينة</div>
+                        <div class="profile-info-val editable" id="pp-city-val">—</div>
+                    </div>
+                    <div class="profile-info-edit-icon" onclick="startEdit('city')">
+                        <i class="fas fa-pen"></i>
+                    </div>
+                </div>
+                <div id="city-edit-area" style="display:none; padding: 10px 0 4px;">
+                    <input class="profile-edit-input" id="city-input" type="text" placeholder="مثال: عمّان">
+                    <div class="profile-edit-actions">
+                        <button class="profile-save-btn" onclick="saveEdit('city')">حفظ</button>
+                        <button class="profile-cancel-btn" onclick="cancelEdit('city')">إلغاء</button>
+                    </div>
+                </div>
+
+                <!-- Bio -->
+                <div class="profile-info-row" id="bio-row">
+                    <div class="profile-info-icon red"><i class="fas fa-quote-right"></i></div>
+                    <div class="profile-info-content">
+                        <div class="profile-info-key">نبذة شخصية</div>
+                        <div class="profile-info-val editable" id="pp-bio-val">—</div>
+                    </div>
+                    <div class="profile-info-edit-icon" onclick="startEdit('bio')">
+                        <i class="fas fa-pen"></i>
+                    </div>
+                </div>
+                <div id="bio-edit-area" style="display:none; padding: 10px 0 4px;">
+                    <input class="profile-edit-input" id="bio-input" type="text" placeholder="أخبرنا عن نفسك...">
+                    <div class="profile-edit-actions">
+                        <button class="profile-save-btn" onclick="saveEdit('bio')">حفظ</button>
+                        <button class="profile-cancel-btn" onclick="cancelEdit('bio')">إلغاء</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Info -->
+            <div class="profile-section-card">
+                <div class="profile-section-label">معلومات الحساب</div>
+                <div class="profile-info-row">
+                    <div class="profile-info-icon green"><i class="fas fa-envelope"></i></div>
+                    <div class="profile-info-content">
+                        <div class="profile-info-key">البريد الإلكتروني</div>
+                        <div class="profile-info-val" id="pp-email-val"></div>
+                    </div>
+                </div>
+                <div class="profile-info-row">
+                    <div class="profile-info-icon gold"><i class="fas fa-shield-alt"></i></div>
+                    <div class="profile-info-content">
+                        <div class="profile-info-key">حالة الحساب</div>
+                        <div class="profile-info-val" style="color:#27ae60">
+                            <i class="fas fa-check-circle"></i> حساب نشط
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logout -->
+            <button class="profile-logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let isRegisterMode = false;
+        const USERS_KEY = 'ardonna_users';
+
+        /* ── Storage helpers ── */
+        function getUsers() {
+            try { return JSON.parse(localStorage.getItem(USERS_KEY) || '{}'); } catch(e) { return {}; }
+        }
+        function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+        function getCurrentUser() { return localStorage.getItem('ardonna_current_user'); }
+        function setCurrentUser(e) { localStorage.setItem('ardonna_current_user', e); }
+        function getUserProfile(email) {
+            const u = getUsers();
+            return u[email] || {};
+        }
+        function saveUserProfile(email, data) {
+            const u = getUsers();
+            u[email] = Object.assign(u[email] || {}, data);
+            saveUsers(u);
+        }
+
+        /* ── Helpers ── */
+        function getInitials(email, profile) {
+            if (profile && profile.name && profile.name.trim()) {
+                return profile.name.trim().charAt(0).toUpperCase();
+            }
+            return email.charAt(0).toUpperCase();
+        }
+
+        function getDisplayName(email, profile) {
+            return (profile && profile.name && profile.name.trim()) ? profile.name.trim() : email.split('@')[0];
+        }
+
+        function formatJoinDate(ts) {
+            if (!ts) return 'عضو جديد';
+            const d = new Date(ts);
+            const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+            return 'عضو منذ ' + months[d.getMonth()] + ' ' + d.getFullYear();
+        }
+
+        function updateProfileBtn(email) {
+            const btn = document.getElementById('profile-header-btn');
+            if (!btn) return;
+            const profile = getUserProfile(email);
+            btn.innerHTML = '<span class="avatar-initials">' + getInitials(email, profile) + '</span>';
+        }
+
+        /* ── Auth ── */
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('auth-title').textContent = isRegisterMode ? 'إنشاء حساب جديد' : 'تسجيل الدخول';
+            document.getElementById('auth-confirm-field').style.display = isRegisterMode ? 'block' : 'none';
+            document.querySelector('.auth-btn').textContent = isRegisterMode ? 'إنشاء الحساب' : 'دخول';
+            document.getElementById('auth-toggle-text').textContent = isRegisterMode ? 'لديك حساب بالفعل؟' : 'ليس لديك حساب؟';
+            document.getElementById('auth-toggle-link').textContent = isRegisterMode ? 'تسجيل الدخول' : 'إنشاء حساب';
+            document.getElementById('auth-error').style.display = 'none';
+        }
+
+        function showAuthError(msg) {
+            const el = document.getElementById('auth-error');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+
+        function authSubmit() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            if (!email || !password) { showAuthError('يرجى ملء جميع الحقول'); return; }
+            if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) { showAuthError('البريد الإلكتروني غير صحيح'); return; }
+
+            const users = getUsers();
+            if (isRegisterMode) {
+                const confirm = document.getElementById('auth-confirm').value;
+                if (password !== confirm) { showAuthError('كلمات المرور غير متطابقة'); return; }
+                if (users[email]) { showAuthError('هذا البريد مسجل مسبقاً'); return; }
+                users[email] = { password, joinedAt: Date.now() };
+                saveUsers(users);
+            } else {
+                if (!users[email]) { showAuthError('البريد الإلكتروني غير مسجل'); return; }
+                if (users[email].password !== password) { showAuthError('كلمة المرور غير صحيحة'); return; }
+            }
+            setCurrentUser(email);
+            document.getElementById('auth-overlay').classList.add('hidden');
+            updateProfileBtn(email);
+        }
+
+        /* ── Profile Page ── */
+        function openProfile() {
+            const email = getCurrentUser();
+            if (!email) return;
+            const profile = getUserProfile(email);
+
+            document.getElementById('pp-avatar').textContent = getInitials(email, profile);
+            document.getElementById('pp-display-name').textContent = getDisplayName(email, profile);
+            document.getElementById('pp-display-email').textContent = email;
+            document.getElementById('pp-join-date').textContent = formatJoinDate(profile.joinedAt);
+            document.getElementById('pp-email-val').textContent = email;
+            document.getElementById('pp-name-val').textContent = profile.name || '—';
+            document.getElementById('pp-phone-val').textContent = profile.phone || '—';
+            document.getElementById('pp-city-val').textContent = profile.city || '—';
+            document.getElementById('pp-bio-val').textContent = profile.bio || '—';
+
+            document.getElementById('profile-page').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeProfilePage() {
+            document.getElementById('profile-page').classList.remove('active');
+            document.body.style.overflow = '';
+            cancelEdit('name'); cancelEdit('phone'); cancelEdit('city'); cancelEdit('bio');
+        }
+
+        /* ── Inline editing ── */
+        function startEdit(field) {
+            const email = getCurrentUser();
+            const profile = getUserProfile(email);
+            const input = document.getElementById(field + '-input');
+            input.value = profile[field] || '';
+            document.getElementById(field + '-edit-area').style.display = 'block';
+            document.getElementById(field + '-row').style.display = 'none';
+            input.focus();
+        }
+
+        function cancelEdit(field) {
+            const area = document.getElementById(field + '-edit-area');
+            const row = document.getElementById(field + '-row');
+            if (area) area.style.display = 'none';
+            if (row) row.style.display = 'flex';
+        }
+
+        function saveEdit(field) {
+            const email = getCurrentUser();
+            const input = document.getElementById(field + '-input');
+            const val = input.value.trim();
+            saveUserProfile(email, { [field]: val });
+
+            document.getElementById('pp-' + field + '-val').textContent = val || '—';
+            cancelEdit(field);
+
+            const profile = getUserProfile(email);
+            document.getElementById('pp-display-name').textContent = getDisplayName(email, profile);
+            document.getElementById('pp-avatar').textContent = getInitials(email, profile);
+            updateProfileBtn(email);
+        }
+
+        /* ── Logout ── */
+        function logout() {
+            localStorage.removeItem('ardonna_current_user');
+            closeProfilePage();
+            document.getElementById('auth-overlay').classList.remove('hidden');
+            document.getElementById('auth-email').value = '';
+            document.getElementById('auth-password').value = '';
+            document.getElementById('auth-error').style.display = 'none';
+        }
+
+        /* ── Init ── */
+        window.addEventListener('DOMContentLoaded', function() {
+            const user = getCurrentUser();
+            if (user) {
+                document.getElementById('auth-overlay').classList.add('hidden');
+                updateProfileBtn(user);
+            }
+        });
+    </script>
+
+
+    <!-- Splash Screen -->
+    <div id="splash">
+        <div class="splash-logo"><i class="fas fa-mosque"></i></div>
+        <div class="splash-title">أردننا</div>
+        <div class="splash-subtitle">اكتشف جمال الأردن</div>
+        <div class="splash-loader"></div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">تمت العملية بنجاح</span>
+    </div>
+
+    <!-- Password Modal -->
+    <div class="password-modal" id="passwordModal">
+        <div class="password-box">
+            <div class="password-icon"><i class="fas fa-lock"></i></div>
+            <div class="password-title">كلمة المرور مطلوبة</div>
+            <div class="password-subtitle">أدخل كلمة المرور للوصول إلى خاصية التعديل</div>
+            <input type="password" class="password-input" id="passwordInput" placeholder="••••••" maxlength="6">
+            <button class="password-btn" onclick="checkPassword()">
+                <i class="fas fa-unlock"></i> فتح
+            </button>
+            <div class="password-hint">كلمة المرور الافتراضية: 123456</div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app">
+        <!-- Home Screen -->
+        <div id="home-screen" class="screen active">
+            <div class="app-header">
+                <div class="header-top">
+                    <div class="header-icon profile-header-btn" id="profile-header-btn" onclick="openProfile()">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="header-title">
+                        اكتشف الأردن
+                        <span class="admin-badge" id="adminBadge" style="display:none;">
+                            <i class="fas fa-crown"></i> مدير
+                        </span>
+                    </div>
+                    <div class="notif-bell-wrap">
+                        <div class="header-icon" onclick="showNotifications()">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="notif-badge" id="notif-badge">0</div>
+                    </div>
+                </div>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="ابحث عن وجهة سياحية..." oninput="searchPlaces()">
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="placesCount">20</div>
+                    <div class="stat-label">موقع سياحي</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="hotelsCount">8</div>
+                    <div class="stat-label">فندق</div>
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <div class="categories-section">
+                <div class="section-header">
+                    <div class="section-title">التصنيفات</div>
+                </div>
+                <div class="categories-scroll" id="categoriesContainer">
+                    <div class="category-card active" data-category="all" onclick="filterCategory('all')">
+                        <div class="cat-icon"><i class="fas fa-th-large"></i></div>
+                        <div class="cat-name">الكل</div>
+                    </div>
+                    <div class="category-card" data-category="historical" onclick="filterCategory('historical')">
+                        <div class="cat-icon"><i class="fas fa-landmark"></i></div>
+                        <div class="cat-name">أثرية</div>
+                    </div>
+                    <div class="category-card" data-category="nature" onclick="filterCategory('nature')">
+                        <div class="cat-icon"><i class="fas fa-mountain"></i></div>
+                        <div class="cat-name">طبيعية</div>
+                    </div>
+                    <div class="category-card" data-category="religious" onclick="filterCategory('religious')">
+                        <div class="cat-icon"><i class="fas fa-pray"></i></div>
+                        <div class="cat-name">دينية</div>
+                    </div>
+                    <div class="category-card" data-category="adventure" onclick="filterCategory('adventure')">
+                        <div class="cat-icon"><i class="fas fa-hiking"></i></div>
+                        <div class="cat-name">مغامرات</div>
+                    </div>
+                    <div class="category-card" data-category="sea" onclick="filterCategory('sea')">
+                        <div class="cat-icon"><i class="fas fa-water"></i></div>
+                        <div class="cat-name">بحرية</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured -->
+            <div class="featured-section">
+                <div class="section-header">
+                    <div class="section-title">الأكثر زيارة</div>
+                    <div class="see-all" onclick="showAllFeatured()">عرض الكل</div>
+                </div>
+                <div class="featured-scroll" id="featuredContainer"></div>
+            </div>
+
+            <!-- Places -->
+            <div class="places-section">
+                <div class="section-header">
+                    <div class="section-title">المواقع السياحية</div>
+                </div>
+                <div class="places-grid" id="placesContainer"></div>
+            </div>
+
+            <!-- Hotels -->
+            <div class="hotels-section">
+                <div class="section-header">
+                    <div class="section-title">الفنادق والإقامة</div>
+                    <div class="see-all" onclick="showAllHotels()">عرض الكل</div>
+                </div>
+                <div id="hotelsContainer"></div>
+            </div>
+        </div>
+
+        <!-- Map Screen -->
+        <div id="map-screen" class="screen" style="display:none;">
+            <div class="app-header">
+                <div class="header-top">
+                    <div></div>
+                    <div class="header-title">خريطة المواقع</div>
+                    <div></div>
+                </div>
+            </div>
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="map-info-card">
+                    <div class="map-info-title">
+                        <i class="fas fa-route"></i>
+                        صعوبة الطرق
+                    </div>
+                    <div id="routesList"></div>
+                    <div class="difficulty-legend">
+                        <div class="legend-item">
+                            <div class="legend-dot easy"></div>
+                            <span>سهل - طريق معبد</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot medium"></div>
+                            <span>متوسط - حذر</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot hard"></div>
+                            <span>صعب - 4x4</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Favorites Screen -->
+        <div id="favorites-screen" class="screen" style="display:none;">
+            <div class="app-header">
+                <div class="header-top">
+                    <div></div>
+                    <div class="header-title">المفضلة</div>
+                    <div></div>
+                </div>
+            </div>
+            <div class="places-section">
+                <div class="places-grid" id="favoritesContainer">
+                    <div class="empty-state">
+                        <i class="fas fa-heart"></i>
+                        <h3>لا توجد مفضلات</h3>
+                        <p>أضف مواقع إلى المفضلة لعرضها هنا</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Page -->
+    <div class="detail-page" id="detailPage">
+        <div class="detail-header">
+            <img id="detailImage" src="" alt="">
+            <div class="detail-header-overlay">
+                <button class="back-btn" onclick="closeDetail()">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+                <div class="detail-actions">
+                    <button class="edit-btn" id="detailEditBtn" onclick="editCurrentPlace()" style="display:none;">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete-btn" id="detailDeleteBtn" onclick="deleteCurrentPlace()" style="display:none;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="share-btn" onclick="sharePlace()">
+                        <i class="fas fa-share-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="detail-content">
+            <div class="detail-title" id="detailName"></div>
+            <div class="detail-location">
+                <i class="fas fa-map-marker-alt"></i>
+                <span id="detailLocation"></span>
+            </div>
+            <div class="detail-tags" id="detailTags"></div>
+
+            <!-- Direction Map -->
+            <div id="directionMap" class="direction-map"></div>
+            <button class="get-directions-btn" id="getDirectionsBtn" onclick="openDirections()">
+                <i class="fas fa-directions"></i> افتح الخريطة للاتجاهات
+            </button>
+
+            <!-- Best Time Box -->
+            <div class="best-time-box" id="bestTimeBox">
+                <div class="best-time-header">
+                    <i class="fas fa-calendar-alt"></i>
+                    <div class="best-time-title">أفضل وقت للزيارة</div>
+                </div>
+                <div class="best-time-content" id="bestTimeContent"></div>
+                <div class="best-time-months" id="bestTimeMonths"></div>
+            </div>
+
+            <!-- Road Info -->
+            <div class="road-info-box" id="roadInfoBox">
+                <div class="road-info-header" id="roadInfoHeader">
+                    <i class="fas fa-road"></i>
+                    <div>
+                        <div class="road-info-title" id="roadInfoTitle">صعوبة الطريق</div>
+                        <div class="road-info-desc" id="roadInfoDesc"></div>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
+                    <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-light);">
+                        <span><i class="fas fa-car"></i> <span id="roadDistance"></span></span>
+                        <span><i class="fas fa-clock"></i> <span id="roadTime"></span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Links -->
+            <div class="booking-box" id="bookingBox">
+                <div class="booking-header">
+                    <i class="fas fa-ticket-alt"></i>
+                    <div class="booking-title">روابط الحجز الرسمية</div>
+                </div>
+                <div class="booking-links" id="bookingLinks"></div>
+            </div>
+
+            <div class="detail-price-box">
+                <div>
+                    <div class="price-label">سعر الدخول</div>
+                    <div class="price-value" id="detailPrice"></div>
+                </div>
+                <div style="text-align: left;">
+                    <div class="price-label">التقييم</div>
+                    <div class="price-value" id="detailRating" style="font-size: 22px;"></div>
+                </div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-section-title">
+                    <i class="fas fa-info-circle"></i>
+                    نبذة عن الموقع
+                </div>
+                <div class="detail-description" id="detailDescription"></div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-section-title">
+                    <i class="fas fa-star"></i>
+                    المميزات
+                </div>
+                <div class="detail-features" id="detailFeatures"></div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-section-title">
+                    <i class="fas fa-images"></i>
+                    معرض الصور
+                </div>
+                <div class="detail-gallery" id="detailGallery"></div>
+            </div>
+            <button class="book-btn" onclick="bookPlace()">
+                <i class="fas fa-ticket-alt"></i> احجز زيارتك الآن
+            </button>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">إضافة موقع جديد</div>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="placeForm" onsubmit="savePlace(event)">
+                <input type="hidden" id="placeId">
+                <div class="image-preview" id="imagePreview" onclick="document.getElementById('imageInput').click()">
+                    <div class="upload-placeholder">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>اضغط لاختيار صورة</span>
+                    </div>
+                    <img id="previewImg" style="display:none;">
+                </div>
+                <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
+                <div class="form-group">
+                    <label class="form-label">اسم الموقع</label>
+                    <input type="text" class="form-input" id="placeName" required placeholder="مثال: قلعة عجلون">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">المدينة</label>
+                        <input type="text" class="form-input" id="placeCity" required placeholder="مثال: عجلون">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">التصنيف</label>
+                        <select class="form-select" id="placeCategory" required>
+                            <option value="historical">أثرية</option>
+                            <option value="nature">طبيعية</option>
+                            <option value="religious">دينية</option>
+                            <option value="adventure">مغامرات</option>
+                            <option value="sea">بحرية</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">سعر الدخول (دينار)</label>
+                        <input type="number" class="form-input" id="placePrice" required placeholder="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">التقييم (1-5)</label>
+                        <input type="number" class="form-input" id="placeRating" required placeholder="4.5" min="1" max="5" step="0.1">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">صعوبة الطريق</label>
+                        <select class="form-select" id="placeRoadDifficulty" required>
+                            <option value="easy">سهل - طريق معبد</option>
+                            <option value="medium">متوسط - يحتاج حذر</option>
+                            <option value="hard">صعب - يحتاج 4x4</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">المسافة من عمّان (كم)</label>
+                        <input type="number" class="form-input" id="placeDistance" required placeholder="100" min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">وقت الوصول (ساعات)</label>
+                    <input type="text" class="form-input" id="placeTime" required placeholder="مثال: 2.5">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">أفضل وقت للزيارة</label>
+                    <input type="text" class="form-input" id="placeBestTime" required placeholder="مثال: مارس - مايو">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">وصف الموقع</label>
+                    <textarea class="form-textarea" id="placeDescription" required placeholder="اكتب وصفاً تفصيلياً عن الموقع..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">المميزات (مفصولة بفاصلة)</label>
+                    <input type="text" class="form-input" id="placeFeatures" placeholder="مثال: موقف سيارات, دليل سياحي, مقهى">
+                </div>
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-save"></i> حفظ الموقع
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-content" style="max-height: 300px;">
+            <div class="modal-header">
+                <div class="modal-title">تأكيد الحذف</div>
+                <button class="modal-close" onclick="closeDeleteModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p style="margin-bottom: 20px; color: var(--text-light);">هل أنت متأكد من حذف هذا الموقع؟ لا يمكن التراجع عن هذا الإجراء.</p>
+            <button class="delete-confirm-btn" onclick="confirmDelete()">
+                <i class="fas fa-trash"></i> نعم، احذف الموقع
+            </button>
+            <button class="submit-btn" style="background: var(--bg); color: var(--text); margin-top: 10px;" onclick="closeDeleteModal()">
+                إلغاء
+            </button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home')">
+            <i class="fas fa-home"></i>
+            <span>الرئيسية</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('map')">
+            <i class="fas fa-map"></i>
+            <span>الخريطة</span>
+        </div>
+        <div class="add-btn-nav" onclick="openAddModal()">
+            <i class="fas fa-plus"></i>
+        </div>
+        <div class="nav-item" onclick="switchTab('favorites')">
+            <i class="fas fa-heart"></i>
+            <span>المفضلة</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('profile')">
+            <i class="fas fa-user"></i>
+            <span>حسابي</span>
+        </div>
+    </nav>
+
+    <script>
+
+        // ==================== DATA ====================
+        let places = [
+            {
+                id: 1,
+                name: "البتراء",
+                city: "معان",
+                category: "historical",
+                price: 50,
+                rating: 4.9,
+                image: "https://cdn.britannica.com/24/153524-050-BA9D084B/Al-Dayr-Petra-Jordan.jpg",
+                description: "البتراء هي مدينة أثرية تقع في جنوب الأردن، تعود للأنباط وكانت عاصمة مملكتهم. تُعرف باسم 'المدينة الوردية' نظراً لألوان صخورها. من أشهر معالمها الخزنة التي تُعتبر إحدى عجائب الدنيا الجديدة.",
+                features: ["موقف سيارات", "دليل سياحي", "مقهى", "متجر هدايا", "مرافق ذوي احتياجات خاصة"],
+                gallery: [
+                    "https://cdn.britannica.com/24/153524-050-BA9D084B/Al-Dayr-Petra-Jordan.jpg",
+                    "https://kimi-web-img.moonshot.cn/img/www.muchbetteradventures.com/a0fab03c43e0e1a097a107e747e40a7f3d3fc9a2.jpg"
+                ],
+                isCustom: false,
+                lat: 30.3285,
+                lng: 35.4444,
+                roadDifficulty: "easy",
+                roadDescription: "طريق صحراوي معبد بالكامل من عمّان (الطريق الصحراوي). يستغرق حوالي 3 ساعات. الطريق واضح وآمن مع علامات مرورية.",
+                distance: 240,
+                time: "3 ساعات",
+                bestTime: "مارس - مايو وسبتمبر - نوفمبر. الجو معتدل ومريح للمشي. تجنب يونيو - أغسطس (حر شديد).",
+                bestMonths: ["مارس", "أبريل", "مايو", "سبتمبر", "أكتوبر", "نوفمبر"],
+                bookingLinks: [
+                    { name: "Petra Pass - تذاكر رسمية", url: "https://petrapass.pdtra.gov.jo/", icon: "ticket", desc: "حجز تذاكر الدخول مباشرة" },
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "تذاكر + تأشيرة مجانية" },
+                    { name: "Petra By Night", url: "https://www.petrabynight.jo/", icon: "official", desc: "تجربة البتراء ليلاً" },
+                    { name: "فنادق البتراء", url: "https://www.booking.com/city/jo/wadi-musa.html", icon: "hotel", desc: "حجز إقامة بالمنطقة" }
+                ]
+            },
+            {
+                id: 2,
+                name: "وادي رم",
+                city: "معان",
+                category: "nature",
+                price: 7,
+                rating: 4.8,
+                image: "https://kimi-web-img.moonshot.cn/img/www.muchbetteradventures.com/a0fab03c43e0e1a097a107e747e40a7f3d3fc9a2.jpg",
+                description: "وادي رم هو وادي صحراوي يقع في جنوب الأردن. يتميز بمناظره الطبيعية الخلابة من كثبان رملية حمراء وصخور ضخمة. يُعرف باسم 'وادي القمر' لأنه يشبه سطح القمر. مدرج ضمن قائمة التراث العالمي لليونسكو.",
+                features: ["تخييم", "جولات جيب", "تسلق صخور", "مشاهدة النجوم", "مطعم بدوي"],
+                gallery: [
+                    "https://kimi-web-img.moonshot.cn/img/www.muchbetteradventures.com/a0fab03c43e0e1a097a107e747e40a7f3d3fc9a2.jpg",
+                    "https://www.airpano.com/files/wadi_rum_01_big.jpg"
+                ],
+                isCustom: false,
+                lat: 29.5753,
+                lng: 35.4211,
+                roadDifficulty: "medium",
+                roadDescription: "طريق معبد لمركز الزوار (5 كم)، لكن داخل الصحراء يحتاج سيارة دفع رباعي. يُنصح بحجز جولة مع مرشد بدوي محلي.",
+                distance: 290,
+                time: "3.5 ساعات",
+                bestTime: "يناير - فبراير (أقل ازدحاماً) أو مارس - أبريل (طقس مثالي). تجنب يونيو - أغسطس (حر مرتفع جداً 40°C+).",
+                bestMonths: ["يناير", "فبراير", "مارس", "أبريل", "سبتمبر", "أكتوبر"],
+                bookingLinks: [
+                    { name: "Wadi Rum Visitor Centre", url: "https://www.wadirum.jo/", icon: "ticket", desc: "تذاكر الدخول والجولات" },
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "يشمل وادي رم" },
+                    { name: "Real Bedouin Camp", url: "https://www.wadirum-jordan.com/", icon: "tour", desc: "مخيمات بدوية أصيلة" },
+                    { name: "Wadi Rum Tours", url: "https://www.wadi-rum.com/", icon: "tour", desc: "جولات جيب وتخييم" }
+                ]
+            },
+            {
+                id: 3,
+                name: "جرش",
+                city: "جرش",
+                category: "historical",
+                price: 10,
+                rating: 4.7,
+                image: "https://kimi-web-img.moonshot.cn/img/news.artnet.com/7d73db289a753f79f81295d42e20ccd53de071da.jpg",
+                description: "جرش هي مدينة أثرية رومانية تقع في شمال الأردن. تُعرف باسم 'بومبي الشرق' وتضم آثاراً رومانية محفوظة بشكل ممتاز مثل المدرج الجنوبي، ساحة النيف، وشارع الأعمدة.",
+                features: ["موقف سيارات", "دليل سياحي", "مقهى", "متجر هدايا", "حفلات موسيقية"],
+                gallery: [
+                    "https://kimi-web-img.moonshot.cn/img/news.artnet.com/7d73db289a753f79f81295d42e20ccd53de071da.jpg",
+                    "https://kimi-web-img.moonshot.cn/img/res.cloudinary.com/0f93179137398852b1359140c7419b07b2a10b42.jpg"
+                ],
+                isCustom: false,
+                lat: 32.2806,
+                lng: 35.8959,
+                roadDifficulty: "easy",
+                roadDescription: "طريق سريع معبد مباشر من عمّان (طريق الملك حسين). يستغرق 45 دقيقة. أسهل موقع للوصول إليه.",
+                distance: 50,
+                time: "45 دقيقة",
+                bestTime: "مارس - مايو وسبتمبر - نوفمبر. الطقس معتدل ومثالي للتجول في الموقع المفتوح.",
+                bestMonths: ["مارس", "أبريل", "مايو", "سبتمبر", "أكتوبر", "نوفمبر"],
+                bookingLinks: [
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "يشمل جرش" },
+                    { name: "Jerash Festival", url: "https://www.visitjordan.com/", icon: "official", desc: "مهرجان جرش الصيفي" },
+                    { name: "فنادق جرش", url: "https://www.booking.com/city/jo/jerash.html", icon: "hotel", desc: "حجز إقامة" }
+                ]
+            },
+            {
+                id: 4,
+                name: "قلعة عجلون",
+                city: "عجلون",
+                category: "historical",
+                price: 3,
+                rating: 4.5,
+                image: "https://kimi-web-img.moonshot.cn/img/i0.wp.com/5b3e25d2bef27915af65240357c2339d7829bf8d.jpg",
+                description: "قلعة عجلون هي قلعة إسلامية بناها القائد أيوبي عز الدين أسامة بن منقذ عام 1184م. تقع على قمة جبل عجلون وتتميز بإطلالتها الرائعة على وادي الأردن.",
+                features: ["موقف سيارات", "دليل سياحي", "مقهى", "إطلالة بانورامية"],
+                gallery: [
+                    "https://kimi-web-img.moonshot.cn/img/i0.wp.com/5b3e25d2bef27915af65240357c2339d7829bf8d.jpg"
+                ],
+                isCustom: false,
+                lat: 32.3253,
+                lng: 35.7278,
+                roadDifficulty: "medium",
+                roadDescription: "طريق جبلي متعرج مع منحدرات حادة. يحتاج قيادة حذرة. الطريق معبد لكن ضيق في بعض الأماكن.",
+                distance: 75,
+                time: "1.5 ساعة",
+                bestTime: "أبريل - يونيو وسبتمبر - أكتوبر. الطقس مثالي والطبيعة خضراء. الربيع أفضل وقت.",
+                bestMonths: ["أبريل", "مايو", "يونيو", "سبتمبر", "أكتوبر"],
+                bookingLinks: [
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "يشمل قلعة عجلون" },
+                    { name: "Ajloun Forest", url: "https://www.visitjordan.com/", icon: "official", desc: "محمية الغابات" },
+                    { name: "فنادق عجلون", url: "https://www.booking.com/city/jo/ajloun.html", icon: "hotel", desc: "حجز إقامة" }
+                ]
+            },
+            {
+                id: 5,
+                name: "البحر الميت",
+                city: "الكرك",
+                category: "nature",
+                price: 20,
+                rating: 4.6,
+                image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800",
+                description: "البحر الميت هو أخفض نقطة على سطح الأرض، يقع على الحدود بين الأردن وفلسطين. يتميز بمياهه المالحة جداً التي تسمح بالطفو، وطينه العلاجي الغني بالمعادن.",
+                features: ["شواطئ خاصة", "منتجعات صحية", "طفو طبيعي", "معالجة بالطين", "مطاعم"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800"
+                ],
+                isCustom: false,
+                lat: 31.5590,
+                lng: 35.4732,
+                roadDifficulty: "easy",
+                roadDescription: "طريق سريع معبد بالكامل من عمّان (طريق البحر الميت). منحدر طويل لكن آمن. يستغرق حوالي ساعة.",
+                distance: 55,
+                time: "1 ساعة",
+                bestTime: "مارس - مايو وسبتمبر - نوفمبر. الطقس معتدل. تجنب الصيف (حر رطب). الشتاء دافئ نسبياً.",
+                bestMonths: ["مارس", "أبريل", "مايو", "سبتمبر", "أكتوبر", "نوفمبر"],
+                bookingLinks: [
+                    { name: "Movenpick Resort", url: "https://www.movenpick.com/", icon: "hotel", desc: "منتجع 5 نجوم" },
+                    { name: "Hilton Dead Sea", url: "https://www.hilton.com/", icon: "hotel", desc: "فندق هيلتون" },
+                    { name: "Jordan Valley", url: "https://www.visitjordan.com/", icon: "official", desc: "منتجعات وادي الأردن" },
+                    { name: "Dead Sea Spa", url: "https://www.booking.com/region/jo/dead-sea.html", icon: "tour", desc: "عروض المنتجعات الصحية" }
+                ]
+            },
+            {
+                id: 6,
+                name: "قلعة عمان",
+                city: "عمان",
+                category: "historical",
+                price: 3,
+                rating: 4.4,
+                image: "https://kimi-web-img.moonshot.cn/img/i0.wp.com/da8892d2653de38433f0f5bd1a40c109dd6b129b.jpg",
+                description: "قلعة عمان هي موقع أثري يقع على قمة جبل القلعة في وسط عمّان. تعود للعصور البرونزية والحديدية والرومانية والبيزنطية والأموية. تضم متحف الآثار الأردني.",
+                features: ["متحف آثار", "إطلالة بانورامية", "موقف سيارات", "دليل سياحي"],
+                gallery: [
+                    "https://kimi-web-img.moonshot.cn/img/i0.wp.com/da8892d2653de38433f0f5bd1a40c109dd6b129b.jpg",
+                    "https://kimi-web-img.moonshot.cn/img/acorjordan.org/2d2f89b9ffdad328590ae3f67207be53e181eeb2.png"
+                ],
+                isCustom: false,
+                lat: 31.9548,
+                lng: 35.9341,
+                roadDifficulty: "easy",
+                roadDescription: "في قلب عمّان، سهل الوصول جداً. يمكن الوصول بالسيارة أو التكسي أو المشي من وسط البلد.",
+                distance: 5,
+                time: "15 دقيقة",
+                bestTime: "طوال العام. الربيع (مارس - مايو) مثالي. تجنب منتصف النهار في الصيف. الغروب وقت رائع للزيارة.",
+                bestMonths: ["مارس", "أبريل", "مايو", "يونيو", "سبتمبر", "أكتوبر"],
+                bookingLinks: [
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "يشمل القلعة" },
+                    { name: "Amman Citadel", url: "https://www.visitjordan.com/", icon: "official", desc: "موقع وزارة السياحة" },
+                    { name: "فنادق عمّان", url: "https://www.booking.com/city/jo/amman.html", icon: "hotel", desc: "حجز فنادق العاصمة" }
+                ]
+            },
+            {
+                id: 7,
+                name: "العقبة",
+                city: "العقبة",
+                category: "sea",
+                price: 0,
+                rating: 4.5,
+                image: "https://kimi-web-img.moonshot.cn/img/www.muchbetteradventures.com/dff0fa13e88709d350db058d0009579b1b424335.jpeg",
+                description: "العقبة هي المدينة الساحلية الوحيدة في الأردن، تقع على ساحل البحر الأحمر. تتميز بشواطئها الجميلة والغوص في الشعاب المرجانية والرياضات المائية المتنوعة.",
+                features: ["غوص", "شواطئ", "رياضات مائية", "مطاعم سمك", "ميناء تاريخي"],
+                gallery: [
+                    "https://kimi-web-img.moonshot.cn/img/www.muchbetteradventures.com/dff0fa13e88709d350db058d0009579b1b424335.jpeg",
+                    "https://kimi-web-img.moonshot.cn/img/i0.wp.com/a21ac5181aef8fdfa71978fa72361a4641cd963c.jpg"
+                ],
+                isCustom: false,
+                lat: 29.5267,
+                lng: 35.0078,
+                roadDifficulty: "easy",
+                roadDescription: "طريق صحراوي معبد بالكامل (الطريق الصحراوي). يستغرق 4 ساعات من عمّان. آمن ومريح.",
+                distance: 330,
+                time: "4 ساعات",
+                bestTime: "مارس - مايو وسبتمبر - نوفمبر. الطقس مثالي للبحر. الصيف حار جداً (40°C+). الشتاء دافئ.",
+                bestMonths: ["مارس", "أبريل", "مايو", "سبتمبر", "أكتوبر", "نوفمبر"],
+                bookingLinks: [
+                    { name: "Aqaba Special Economic Zone", url: "https://www.aqabazone.com/", icon: "official", desc: "موقع العقبة الاقتصادية" },
+                    { name: "Aqaba Diving", url: "https://www.aqaba.jo/", icon: "tour", desc: "مراكز الغوص" },
+                    { name: "InterContinental Aqaba", url: "https://www.ihg.com/intercontinental/", icon: "hotel", desc: "فندق 5 نجوم" },
+                    { name: "فنادق العقبة", url: "https://www.booking.com/city/jo/aqaba.html", icon: "hotel", desc: "حجز إقامة" }
+                ]
+            },
+            {
+                id: 8,
+                name: "وادي الموجب",
+                city: "مادبا",
+                category: "adventure",
+                price: 15,
+                rating: 4.7,
+                image: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800",
+                description: "وادي الموجب هو محمية طبيعية تقع على بعد 90 كم جنوب عمّان. يتميز بمناظره الطبيعية الخلابة والشلالات والمياه المتدفقة. يوفر أنشطة مثل المشي في الماء والتسلق.",
+                features: ["مشي في الماء", "تسلق", "شلالات", "تخييم", "مرشدين محليين"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800"
+                ],
+                isCustom: false,
+                lat: 31.4403,
+                lng: 35.7931,
+                roadDifficulty: "medium",
+                roadDescription: "طريق جبلي متعرج. يحتاج سيارة عالية قليلاً. الطريق معبد لكن منحدرات حادة. يستغرق 1.5 ساعة.",
+                distance: 90,
+                time: "1.5 ساعة",
+                bestTime: "أبريل - أكتوبر. الماء دافئ ومريح. تجنب الشتاء (الماء بارد جداً). الربيع أفضل وقت.",
+                bestMonths: ["أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر"],
+                bookingLinks: [
+                    { name: "Mujib Biosphere Reserve", url: "https://www.rscn.org.jo/", icon: "official", desc: "الجمعية الملكية لحماية الطبيعة" },
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "يشمل بعض الأنشطة" },
+                    { name: "Adventure Tours", url: "https://www.experiencejordan.com/", icon: "tour", desc: "جولات مغامرات" }
+                ]
+            },
+            {
+                id: 9,
+                name: "أم قيس",
+                city: "إربد",
+                category: "historical",
+                price: 5,
+                rating: 4.3,
+                image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800",
+                description: "أم قيس هي مدينة أثرية تقع في شمال الأردن. كانت تعرف باسم 'جدارة' في العصور الرومانية. تتميز بإطلالتها الرائعة على نهر اليرموك وهضبة الجولان.",
+                features: ["إطلالة بانورامية", "مطعم", "موقف سيارات", "دليل سياحي"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800"
+                ],
+                isCustom: false,
+                lat: 32.6531,
+                lng: 35.6789,
+                roadDifficulty: "easy",
+                roadDescription: "طريق معبد من إربد. سهل الوصول. يستغرق ساعة ونصف من عمّان.",
+                distance: 110,
+                time: "1.5 ساعة",
+                bestTime: "مارس - يونيو وسبتمبر - نوفمبر. الطقس معتدل والإطلالة واضحة. الضباب قليل.",
+                bestMonths: ["مارس", "أبريل", "مايو", "يونيو", "سبتمبر", "أكتوبر", "نوفمبر"],
+                bookingLinks: [
+                    { name: "Umm Qais Museum", url: "https://www.visitjordan.com/", icon: "official", desc: "المتحف الأثري" },
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "يشمل أم قيس" },
+                    { name: "فنادق إربد", url: "https://www.booking.com/city/jo/irbid.html", icon: "hotel", desc: "حجز إقامة" }
+                ]
+            },
+            {
+                id: 10,
+                name: "محمية ضانا",
+                city: "طفيلة",
+                category: "nature",
+                price: 8,
+                rating: 4.6,
+                image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800",
+                description: "محمية ضانا للبيوسفير هي أكبر محمية طبيعية في الأردن. تضم تنوعاً بيولوجياً فريداً من نوعه مع أكثر من 800 نوع نباتي و 449 نوعاً حيوانياً.",
+                features: ["مسارات مشي", "تخييم", "مطعم", "إقامة بيئية", "مرشدين"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800"
+                ],
+                isCustom: false,
+                lat: 30.6756,
+                lng: 35.6103,
+                roadDifficulty: "medium",
+                roadDescription: "طريق جبلي متعرج. منظر خلاب لكن يحتاج قيادة حذرة. يستغرق 2.5 ساعة من عمّان.",
+                distance: 180,
+                time: "2.5 ساعة",
+                bestTime: "مارس - مايو (الربيع) - الطبيعة خضراء والزهور تتفتح. سبتمبر - نوفمبر أيضاً مثالي.",
+                bestMonths: ["مارس", "أبريل", "مايو", "سبتمبر", "أكتوبر", "نوفمبر"],
+                bookingLinks: [
+                    { name: "Dana Biosphere Reserve", url: "https://www.rscn.org.jo/", icon: "official", desc: "الجمعية الملكية لحماية الطبيعة" },
+                    { name: "Dana Lodge", url: "https://www.booking.com/hotel/jo/dana-lodge.html", icon: "hotel", desc: "إقامة بيئية" },
+                    { name: "Jordan Trail", url: "https://www.jordantrail.org/", icon: "tour", desc: "مسار الأردن المشهور" }
+                ]
+            },
+            {
+                id: 11,
+                name: "مغطس يسوع",
+                city: "مادبا",
+                category: "religious",
+                price: 12,
+                rating: 4.5,
+                image: "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=800",
+                description: "مغطس يسوع المسيح هو موقع على نهر الأردن يُعتقد أنه المكان الذي تعمد فيه السيد المسيح على يد يوحنا المعمدان. يقع في منطقة البقعة الأردنية.",
+                features: ["موقع ديني", "دليل روحي", "موقف سيارات", "متجر هدايا"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=800"
+                ],
+                isCustom: false,
+                lat: 31.8374,
+                lng: 35.5469,
+                roadDifficulty: "easy",
+                roadDescription: "طريق معبد من عمّان. سهل الوصول. يستغرق 45 دقيقة.",
+                distance: 55,
+                time: "45 دقيقة",
+                bestTime: "مارس - نوفمبر. الطقس معتدل. تجنب منتصف الصيف (حر شديد). الأحد صباحاً وقت هادئ.",
+                bestMonths: ["مارس", "أبريل", "مايو", "يونيو", "سبتمبر", "أكتوبر", "نوفمبر"],
+                bookingLinks: [
+                    { name: "Baptism Site Official", url: "https://www.baptismsite.com/", icon: "official", desc: "الموقع الرسمي" },
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "يشمل الموقع" },
+                    { name: "Madaba Tourism", url: "https://www.visitjordan.com/", icon: "tour", desc: "سياحة مادبا" }
+                ]
+            },
+            {
+                id: 12,
+                name: "قلعة الشوبك",
+                city: "معان",
+                category: "historical",
+                price: 2,
+                rating: 4.2,
+                image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800",
+                description: "قلعة الشوبك (مونتريال) هي قلعة صليبية بناها الملك بلدوين الأول عام 1115م. تقع على بعد 35 كم شمال البتراء وتتميز بموقعها الاستراتيجي.",
+                features: ["موقف سيارات", "إطلالة", "دليل سياحي", "ممرات سرية"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800"
+                ],
+                isCustom: false,
+                lat: 30.5314,
+                lng: 35.5592,
+                roadDifficulty: "medium",
+                roadDescription: "طريق جبلي صاعد. يحتاج سيارة قوية. منظر رائع لكن طريق ضيق ومتعرج.",
+                distance: 210,
+                time: "3 ساعات",
+                bestTime: "مارس - مايو وسبتمبر - نوفمبر. الطقس معتدل. الصيف حار جداً على القلعة المكشوفة.",
+                bestMonths: ["مارس", "أبريل", "مايو", "سبتمبر", "أكتوبر", "نوفمبر"],
+                bookingLinks: [
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "يشمل القلعة" },
+                    { name: "Shobak Castle", url: "https://www.visitjordan.com/", icon: "official", desc: "موقع وزارة السياحة" },
+                    { name: "Petra + Shobak Tours", url: "https://www.experiencejordan.com/", icon: "tour", desc: "جولات مجمعة" }
+                ]
+            },
+            {
+                id: 13,
+                name: "مادبا - مدينة الفسيفساء",
+                city: "مادبا",
+                category: "historical",
+                price: 3,
+                rating: 4.5,
+                image: "https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800",
+                description: "مادبا تشتهر بكنيستها البيزنطية التي تضم خريطة مادبا الشهيرة، وهي أقدم خريطة جغرافية لفلسطين والأردن مصنوعة من الفسيفساء وتعود للقرن السادس الميلادي. المدينة تضم أكثر من 30 كنيسة بيزنطية.",
+                features: ["خريطة فسيفساء", "كنائس بيزنطية", "متحف", "مطاعم", "محال تذكارية"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800"
+                ],
+                isCustom: false,
+                lat: 31.7167,
+                lng: 35.7956,
+                roadDifficulty: "easy",
+                roadDescription: "طريق سريع معبد من عمّان جنوباً. يستغرق 30 دقيقة فقط. سهل جداً.",
+                distance: 30,
+                time: "30 دقيقة",
+                bestTime: "طوال العام. الربيع والخريف أجمل. يمكن الجمع مع زيارة جبل نيبو.",
+                bestMonths: ["مارس", "أبريل", "مايو", "يونيو", "سبتمبر", "أكتوبر", "نوفمبر"],
+                bookingLinks: [
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "يشمل مادبا" },
+                    { name: "Madaba Tourism", url: "https://www.visitjordan.com/", icon: "official", desc: "سياحة مادبا" },
+                    { name: "فنادق مادبا", url: "https://www.booking.com/city/jo/madaba.html", icon: "hotel", desc: "حجز إقامة" }
+                ]
+            },
+            {
+                id: 14,
+                name: "قلعة الكرك",
+                city: "الكرك",
+                category: "historical",
+                price: 3,
+                rating: 4.4,
+                image: "https://images.unsplash.com/photo-1589182337358-2cb63099350c?w=800",
+                description: "قلعة الكرك هي واحدة من أكبر القلاع الصليبية في الشرق الأوسط، بناها الصليبيون عام 1132م. تقع على قمة جبل بارتفاع 900 متر وتطل على البحر الميت ووادي عربة. من أبرز معالم الأردن التاريخية.",
+                features: ["متحف داخلي", "أنفاق سرية", "إطلالة بانورامية", "موقف سيارات", "دليل سياحي"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1589182337358-2cb63099350c?w=800"
+                ],
+                isCustom: false,
+                lat: 31.1833,
+                lng: 35.7028,
+                roadDifficulty: "easy",
+                roadDescription: "طريق الملك يمر بالكرك مباشرة. معبد بالكامل. يستغرق ساعة ونصف من عمّان.",
+                distance: 140,
+                time: "1.5 ساعة",
+                bestTime: "مارس - مايو وسبتمبر - نوفمبر. الطقس لطيف. الصيف مقبول لأن الارتفاع يخفف الحرارة.",
+                bestMonths: ["مارس", "أبريل", "مايو", "سبتمبر", "أكتوبر", "نوفمبر"],
+                bookingLinks: [
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "يشمل قلعة الكرك" },
+                    { name: "Karak Tourism", url: "https://www.visitjordan.com/", icon: "official", desc: "موقع الزيارة" },
+                    { name: "فنادق الكرك", url: "https://www.booking.com/city/jo/karak.html", icon: "hotel", desc: "حجز إقامة" }
+                ]
+            },
+            {
+                id: 15,
+                name: "حمامات ماعين",
+                city: "مادبا",
+                category: "nature",
+                price: 18,
+                rating: 4.6,
+                image: "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800",
+                description: "حمامات ماعين هي ينابيع مياه معدنية ساخنة طبيعية تتدفق من المرتفعات وتكوّن شلالات فريدة. تقع في وادٍ خضير محاط بالجبال. الماء الساخن (45°C) غني بالمعادن ويُستخدم للعلاج.",
+                features: ["ينابيع حارة", "شلالات طبيعية", "منتجع صحي", "مسبح", "مطعم"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800"
+                ],
+                isCustom: false,
+                lat: 31.5583,
+                lng: 35.6331,
+                roadDifficulty: "medium",
+                roadDescription: "طريق جبلي منحدر من مادبا. يستغرق 45 دقيقة من مادبا. الطريق معبد لكن ضيق في مكانين.",
+                distance: 65,
+                time: "1 ساعة",
+                bestTime: "طوال العام. الشتاء مميز جداً (الماء الساخن في الجو البارد). الربيع والخريف مثاليان.",
+                bestMonths: ["يناير", "فبراير", "مارس", "أكتوبر", "نوفمبر", "ديسمبر"],
+                bookingLinks: [
+                    { name: "Evason Ma'in Hot Springs", url: "https://www.sixsenses.com/", icon: "hotel", desc: "منتجع 5 نجوم" },
+                    { name: "Ma'in Hot Springs Resort", url: "https://www.booking.com/hotel/jo/main-hot-springs.html", icon: "hotel", desc: "حجز الإقامة" },
+                    { name: "Jordan Tourism", url: "https://www.visitjordan.com/", icon: "official", desc: "معلومات الزيارة" }
+                ]
+            },
+            {
+                id: 16,
+                name: "قصر عمرة",
+                city: "الزرقاء",
+                category: "historical",
+                price: 3,
+                rating: 4.3,
+                image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
+                description: "قصر عمرة أو قصير عمرة هو قصر أموي بُني في القرن الثامن الميلادي. مدرج ضمن قائمة التراث العالمي لليونسكو لجدارياته الفريدة التي تُعدّ من أجمل أمثلة الفن الإسلامي المبكر في العالم.",
+                features: ["جداريات يونسكو", "حمام روماني", "دليل سياحي", "موقف سيارات"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800"
+                ],
+                isCustom: false,
+                lat: 31.8017,
+                lng: 36.5897,
+                roadDifficulty: "easy",
+                roadDescription: "طريق البادية الشرقية المعبد. سهل الوصول. يستغرق ساعة من عمّان.",
+                distance: 85,
+                time: "1 ساعة",
+                bestTime: "أكتوبر - أبريل. الشتاء خفيف. تجنب الصيف (حر صحراوي شديد). الربيع المبكر جميل جداً.",
+                bestMonths: ["أكتوبر", "نوفمبر", "ديسمبر", "يناير", "فبراير", "مارس", "أبريل"],
+                bookingLinks: [
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "يشمل قصر عمرة" },
+                    { name: "UNESCO Site", url: "https://whc.unesco.org/", icon: "official", desc: "موقع التراث العالمي" },
+                    { name: "Desert Castles Tour", url: "https://www.experiencejordan.com/", icon: "tour", desc: "جولة قصور البادية" }
+                ]
+            },
+            {
+                id: 17,
+                name: "جبل نيبو",
+                city: "مادبا",
+                category: "religious",
+                price: 3,
+                rating: 4.4,
+                image: "https://images.unsplash.com/photo-1547480053-7d174f67b557?w=800",
+                description: "جبل نيبو هو الجبل الذي يُعتقد أن النبي موسى عليه السلام رأى منه أرض كنعان قبل وفاته. يقع على ارتفاع 817 متراً ويوفر إطلالة رائعة على البحر الميت وفلسطين ووادي الأردن.",
+                features: ["إطلالة بانورامية", "كنيسة بيزنطية", "فسيفساء", "موقف سيارات", "متجر هدايا"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1547480053-7d174f67b557?w=800"
+                ],
+                isCustom: false,
+                lat: 31.7667,
+                lng: 35.7239,
+                roadDifficulty: "easy",
+                roadDescription: "طريق معبد بالكامل من مادبا (8 كم). يستغرق 45 دقيقة من عمّان. سهل جداً.",
+                distance: 40,
+                time: "45 دقيقة",
+                bestTime: "طوال العام. الشتاء الصافي يعطي أجمل إطلالة على البحر الميت. الربيع رائع.",
+                bestMonths: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "أكتوبر", "نوفمبر", "ديسمبر"],
+                bookingLinks: [
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "يشمل جبل نيبو" },
+                    { name: "Mount Nebo Official", url: "https://www.visitjordan.com/", icon: "official", desc: "معلومات الزيارة" },
+                    { name: "Madaba + Nebo Tour", url: "https://www.experiencejordan.com/", icon: "tour", desc: "جولة مادبا ونيبو" }
+                ]
+            },
+            {
+                id: 18,
+                name: "السلط - عاصمة التسامح",
+                city: "البلقاء",
+                category: "historical",
+                price: 0,
+                rating: 4.3,
+                image: "https://images.unsplash.com/photo-1555400038-63f5ba517a47?w=800",
+                description: "السلط مدينة أردنية تاريخية ومدرجة ضمن التراث العالمي لليونسكو عام 2021 بوصفها 'مكاناً للتسامح والضيافة الحضرية'. تتميز بعمارتها العثمانية الجميلة ومبانيها الحجرية ذات الطراز المعماري الفريد.",
+                features: ["مباني عثمانية", "متحف", "أسواق تقليدية", "مطاعم شعبية", "جولات مشي"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1555400038-63f5ba517a47?w=800"
+                ],
+                isCustom: false,
+                lat: 32.0333,
+                lng: 35.7272,
+                roadDifficulty: "easy",
+                roadDescription: "طريق معبد من عمّان. يستغرق 30 دقيقة فقط. سهل الوصول جداً.",
+                distance: 28,
+                time: "30 دقيقة",
+                bestTime: "طوال العام. الربيع والخريف أفضل. الجو في السلط أكثر اعتدالاً من عمّان.",
+                bestMonths: ["مارس", "أبريل", "مايو", "يونيو", "سبتمبر", "أكتوبر", "نوفمبر"],
+                bookingLinks: [
+                    { name: "UNESCO - Salt", url: "https://whc.unesco.org/", icon: "official", desc: "موقع التراث العالمي" },
+                    { name: "Salt Tourism", url: "https://www.visitjordan.com/", icon: "official", desc: "سياحة السلط" },
+                    { name: "فنادق قريبة", url: "https://www.booking.com/city/jo/amman.html", icon: "hotel", desc: "إقامة في عمّان" }
+                ]
+            },
+            {
+                id: 19,
+                name: "قصر الأزرق",
+                city: "الزرقاء",
+                category: "historical",
+                price: 2,
+                rating: 4.1,
+                image: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=800",
+                description: "قصر الأزرق هو قلعة رومانية قديمة أُعيد استخدامها في العصر البيزنطي والأموي. اشتُهر بإقامة لورانس العرب فيه خلال الثورة العربية الكبرى عام 1917. يقع في قرية الأزرق الواحية وسط البادية الشرقية.",
+                features: ["موقف سيارات", "دليل سياحي", "متجر هدايا", "محمية طبيعية قريبة"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=800"
+                ],
+                isCustom: false,
+                lat: 31.8292,
+                lng: 36.8131,
+                roadDifficulty: "easy",
+                roadDescription: "طريق صحراوي معبد ومستقيم. يستغرق ساعة ونصف من عمّان. آمن ومريح.",
+                distance: 100,
+                time: "1 ساعة",
+                bestTime: "أكتوبر - أبريل. تجنب الصيف الصحراوي. الشتاء خفيف ومناسب للزيارة.",
+                bestMonths: ["أكتوبر", "نوفمبر", "ديسمبر", "يناير", "فبراير", "مارس", "أبريل"],
+                bookingLinks: [
+                    { name: "Jordan Pass", url: "https://www.jordanpass.jo/", icon: "pass", desc: "يشمل القصر" },
+                    { name: "Azraq Wetland Reserve", url: "https://www.rscn.org.jo/", icon: "official", desc: "المحمية الطبيعية" },
+                    { name: "Desert Castles Tour", url: "https://www.experiencejordan.com/", icon: "tour", desc: "جولة قصور البادية" }
+                ]
+            },
+            {
+                id: 20,
+                name: "شلالات وادي شعيب",
+                city: "السلط",
+                category: "adventure",
+                price: 5,
+                rating: 4.4,
+                image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800",
+                description: "وادي شعيب هو وادٍ خضري خلاب يقع بين عمّان والأغوار. يتميز بشلالاته الجميلة ومياهه العذبة المتدفقة. مكان مثالي للتنزه وقضاء يوم طبيعي بعيداً عن ضجيج المدينة.",
+                features: ["شلالات", "سباحة", "تسلق", "تخييم", "بيك نيك"],
+                gallery: [
+                    "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800"
+                ],
+                isCustom: false,
+                lat: 32.0167,
+                lng: 35.6831,
+                roadDifficulty: "medium",
+                roadDescription: "طريق جبلي منحدر باتجاه الأغوار. يحتاج انتباهاً أثناء القيادة. يستغرق 40 دقيقة.",
+                distance: 35,
+                time: "40 دقيقة",
+                bestTime: "فبراير - مايو. الربيع أفضل وقت (مياه وفيرة وطبيعة خضراء). تجنب الصيف.",
+                bestMonths: ["فبراير", "مارس", "أبريل", "مايو"],
+                bookingLinks: [
+                    { name: "Jordan Trail", url: "https://www.jordantrail.org/", icon: "tour", desc: "مسار الأردن" },
+                    { name: "Adventure Jordan", url: "https://www.experiencejordan.com/", icon: "tour", desc: "جولات مغامرات" },
+                    { name: "Jordan Tourism", url: "https://www.visitjordan.com/", icon: "official", desc: "معلومات الزيارة" }
+                ]
+            }
+        ];
+
+        let hotels = [
+            {
+                id: 1,
+                name: "فندق حياة عمان",
+                city: "عمان",
+                stars: 5,
+                rating: 4.8,
+                price: 120,
+                image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
+                description: "فندق فاخر في قلب عمّان مع إطلالة بانورامية على المدينة",
+                bookingUrl: "https://www.hyatt.com/"
+            },
+            {
+                id: 2,
+                name: "منتجع موفنبيك البحر الميت",
+                city: "البحر الميت",
+                stars: 5,
+                rating: 4.7,
+                price: 180,
+                image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800",
+                description: "منتجع فاخر على شاطئ البحر الميت مع منتجع صحي متكامل",
+                bookingUrl: "https://www.movenpick.com/"
+            },
+            {
+                id: 3,
+                name: "فندق البتراء موفنبيك",
+                city: "البتراء",
+                stars: 5,
+                rating: 4.6,
+                price: 150,
+                image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800",
+                description: "فندق فاخر على بعد خطوات من مدخل البتراء",
+                bookingUrl: "https://www.movenpick.com/"
+            },
+            {
+                id: 4,
+                name: "منتجع وادي رم",
+                city: "وادي رم",
+                stars: 4,
+                rating: 4.5,
+                price: 200,
+                image: "https://images.unsplash.com/photo-1519449556851-5720b33024e7?w=800",
+                description: "خيام فاخرة في قلب وادي رم مع تجربة بدوية أصيلة",
+                bookingUrl: "https://www.wadirum-jordan.com/"
+            },
+            {
+                id: 5,
+                name: "فندق العقبة إنتركونتيننتال",
+                city: "العقبة",
+                stars: 5,
+                rating: 4.7,
+                price: 140,
+                image: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800",
+                description: "فندق فاخر على شاطئ البحر الأحمر مع شاطئ خاص",
+                bookingUrl: "https://www.ihg.com/intercontinental/"
+            },
+            {
+                id: 6,
+                name: "فندق ليدر العقبة",
+                city: "العقبة",
+                stars: 4,
+                rating: 4.3,
+                price: 80,
+                image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800",
+                description: "فندق مريح في وسط العقبة بالقرب من الشاطئ",
+                bookingUrl: "https://www.booking.com/city/jo/aqaba.html"
+            },
+            {
+                id: 7,
+                name: "فندق إيفرست عمان",
+                city: "عمان",
+                stars: 3,
+                rating: 4.0,
+                price: 45,
+                image: "https://images.unsplash.com/photo-1596436889106-be35e843f974?w=800",
+                description: "فندق اقتصادي مريح في منطقة جبل عمّان",
+                bookingUrl: "https://www.booking.com/city/jo/amman.html"
+            },
+            {
+                id: 8,
+                name: "فندق كراون بلازا عمان",
+                city: "عمان",
+                stars: 5,
+                rating: 4.6,
+                price: 110,
+                image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800",
+                description: "فندق عالمي المستوى في منطقة الأعمال الرئيسية",
+                bookingUrl: "https://www.ihg.com/crowneplaza/"
+            }
+        ];
+
+        let favorites = [];
+        let currentPlace = null;
+        let currentCategory = 'all';
+        let deleteTargetId = null;
+        let isAdmin = false;
+        let map = null;
+        let detailMap = null;
+        let markers = [];
+
+        const ADMIN_PASSWORD = "123456";
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.getElementById('splash').classList.add('hidden');
+            }, 2500);
+
+            renderFeatured();
+            renderPlaces();
+            renderHotels();
+            renderRoutesList();
+            updateStats();
+        });
+
+        // ==================== PASSWORD PROTECTION ====================
+        function openAddModal() {
+            if (!isAdmin) {
+                document.getElementById('passwordModal').classList.add('active');
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').classList.remove('error');
+                setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+                return;
+            }
+            openAddModalInternal();
+        }
+
+        function checkPassword() {
+            const input = document.getElementById('passwordInput');
+            if (input.value === ADMIN_PASSWORD) {
+                isAdmin = true;
+                document.getElementById('passwordModal').classList.remove('active');
+                document.getElementById('adminBadge').style.display = 'inline-flex';
+                showToast('تم تفعيل وضع المدير بنجاح');
+                openAddModalInternal();
+            } else {
+                input.classList.add('error');
+                showToast('كلمة المرور غير صحيحة');
+                setTimeout(() => input.classList.remove('error'), 500);
+            }
+        }
+
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkPassword();
+        });
+
+        function openAddModalInternal() {
+            document.getElementById('modalTitle').textContent = 'إضافة موقع جديد';
+            document.getElementById('placeForm').reset();
+            document.getElementById('placeId').value = '';
+            document.getElementById('previewImg').style.display = 'none';
+            document.getElementById('imagePreview').classList.remove('has-image');
+            selectedImage = null;
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        // ==================== MAP ====================
+        function initMap() {
+            if (map) return;
+
+            map = L.map('map').setView([31.5, 36.5], 7);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            places.forEach(place => {
+                const color = place.roadDifficulty === 'easy' ? '#27ae60' : 
+                             place.roadDifficulty === 'medium' ? '#f39c12' : '#e74c3c';
+
+                const marker = L.circleMarker([place.lat, place.lng], {
+                    radius: 12,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.9
+                }).addTo(map);
+
+                const popupContent = `
+                    <div class="popup-content" onclick="openDetail(${place.id})">
+                        <img src="${place.image}" alt="${place.name}">
+                        <div class="popup-title">${place.name}</div>
+                        <div class="popup-price">${place.price > 0 ? place.price + ' دينار' : 'مجاني'}</div>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent);
+                markers.push(marker);
+            });
+        }
+
+        function initDetailMap() {
+            if (!currentPlace) return;
+
+            if (detailMap) {
+                detailMap.remove();
+            }
+
+            detailMap = L.map('directionMap').setView([currentPlace.lat, currentPlace.lng], 12);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(detailMap);
+
+            const color = currentPlace.roadDifficulty === 'easy' ? '#27ae60' : 
+                         currentPlace.roadDifficulty === 'medium' ? '#f39c12' : '#e74c3c';
+
+            L.circleMarker([currentPlace.lat, currentPlace.lng], {
+                radius: 15,
+                fillColor: color,
+                color: '#fff',
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 0.9
+            }).addTo(detailMap).bindPopup(`<b>${currentPlace.name}</b><br>${currentPlace.city}`);
+        }
+
+        function openDirections() {
+            if (!currentPlace) return;
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${currentPlace.lat},${currentPlace.lng}`;
+            window.open(url, '_blank');
+        }
+
+        // ==================== RENDER FUNCTIONS ====================
+        function renderFeatured() {
+            const container = document.getElementById('featuredContainer');
+            const featured = places.slice(0, 4);
+
+            container.innerHTML = featured.map(place => `
+                <div class="featured-card" onclick="openDetail(${place.id})">
+                    <img src="${place.image}" alt="${place.name}" loading="lazy">
+                    <div class="featured-overlay">
+                        <div class="featured-badge">الأكثر زيارة</div>
+                        <div class="featured-name">${place.name}</div>
+                        <div class="featured-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${place.city}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderPlaces() {
+            const container = document.getElementById('placesContainer');
+            let filtered = currentCategory === 'all' ? places : places.filter(p => p.category === currentCategory);
+
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm) || p.city.toLowerCase().includes(searchTerm));
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <i class="fas fa-search"></i>
+                        <h3>لا توجد نتائج</h3>
+                        <p>جرب بحثاً مختلفاً</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map((place, index) => `
+                <div class="place-card" onclick="openDetail(${place.id})" style="animation-delay: ${index * 0.05}s">
+                    <img class="place-image" src="${place.image}" alt="${place.name}" loading="lazy">
+                    <div class="place-info">
+                        <div class="place-name">${place.name}</div>
+                        <div class="place-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${place.city}
+                        </div>
+                        <div class="best-time-badge">
+                            <i class="fas fa-calendar-check"></i>
+                            ${place.bestMonths.slice(0, 3).join(', ')}
+                        </div>
+                        <div class="road-badge road-${place.roadDifficulty}">
+                            <i class="fas fa-road"></i>
+                            ${place.roadDifficulty === 'easy' ? 'طريق سهل' : place.roadDifficulty === 'medium' ? 'يحتاج حذر' : 'صعب - 4x4'}
+                        </div>
+                        <div class="place-meta">
+                            <div class="place-rating">
+                                <i class="fas fa-star"></i>
+                                ${place.rating}
+                            </div>
+                            <div class="place-price">
+                                ${place.price > 0 ? place.price + ' دينار' : 'مجاني'}
+                                <span>/شخص</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderHotels() {
+            const container = document.getElementById('hotelsContainer');
+            container.innerHTML = hotels.slice(0, 4).map(hotel => `
+                <div class="hotel-card" onclick="window.open('${hotel.bookingUrl}', '_blank')">
+                    <img class="hotel-image" src="${hotel.image}" alt="${hotel.name}" loading="lazy">
+                    <div class="hotel-info">
+                        <div>
+                            <div class="hotel-name">${hotel.name}</div>
+                            <div class="hotel-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                ${hotel.city}
+                            </div>
+                            <div class="hotel-stars">
+                                ${Array(hotel.stars).fill('<i class="fas fa-star"></i>').join('')}
+                            </div>
+                        </div>
+                        <div class="hotel-bottom">
+                            <div class="hotel-rating">${hotel.rating}</div>
+                            <div class="hotel-price">
+                                ${hotel.price} دينار
+                                <span>/ليلة</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderRoutesList() {
+            const container = document.getElementById('routesList');
+            const difficultyOrder = { easy: 1, medium: 2, hard: 3 };
+            const sorted = [...places].sort((a, b) => difficultyOrder[a.roadDifficulty] - difficultyOrder[b.roadDifficulty]);
+
+            container.innerHTML = sorted.map(place => `
+                <div class="route-item" onclick="openDetail(${place.id})">
+                    <div class="route-icon ${place.roadDifficulty}">
+                        <i class="fas fa-${place.roadDifficulty === 'easy' ? 'car' : place.roadDifficulty === 'medium' ? 'exclamation-triangle' : 'truck-pickup'}"></i>
+                    </div>
+                    <div class="route-details">
+                        <div class="route-name">${place.name}</div>
+                        <div class="route-info">
+                            ${place.roadDifficulty === 'easy' ? 'طريق معبد - سهل' : place.roadDifficulty === 'medium' ? 'طريق جبلي - يحتاج حذر' : 'صحراوي/جبلي - يحتاج 4x4'} 
+                            | ${place.distance} كم | ${place.time}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderFavorites() {
+            const container = document.getElementById('favoritesContainer');
+            if (favorites.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <i class="fas fa-heart"></i>
+                        <h3>لا توجد مفضلات</h3>
+                        <p>أضف مواقع إلى المفضلة لعرضها هنا</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = favorites.map((place, index) => `
+                <div class="place-card" onclick="openDetail(${place.id})" style="animation-delay: ${index * 0.05}s">
+                    <img class="place-image" src="${place.image}" alt="${place.name}" loading="lazy">
+                    <div class="place-info">
+                        <div class="place-name">${place.name}</div>
+                        <div class="place-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${place.city}
+                        </div>
+                        <div class="place-meta">
+                            <div class="place-rating">
+                                <i class="fas fa-star"></i>
+                                ${place.rating}
+                            </div>
+                            <div class="place-price">
+                                ${place.price > 0 ? place.price + ' دينار' : 'مجاني'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStats() {
+            document.getElementById('placesCount').textContent = places.length;
+            document.getElementById('hotelsCount').textContent = hotels.length;
+        }
+
+        // ==================== NAVIGATION ====================
+        function switchTab(tab) {
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            if (tab === 'home') {
+                document.getElementById('home-screen').style.display = 'block';
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+            } else if (tab === 'map') {
+                document.getElementById('map-screen').style.display = 'block';
+                document.querySelectorAll('.nav-item')[1].classList.add('active');
+                setTimeout(initMap, 100);
+            } else if (tab === 'favorites') {
+                document.getElementById('favorites-screen').style.display = 'block';
+                renderFavorites();
+                document.querySelectorAll('.nav-item')[3].classList.add('active');
+            } else if (tab === 'profile') {
+                showToast('قريباً - صفحة الحساب الشخصي');
+                document.getElementById('home-screen').style.display = 'block';
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+            }
+        }
+
+        function filterCategory(category) {
+            currentCategory = category;
+            document.querySelectorAll('.category-card').forEach(c => c.classList.remove('active'));
+            document.querySelector(`[data-category="${category}"]`).classList.add('active');
+            renderPlaces();
+        }
+
+        function searchPlaces() {
+            renderPlaces();
+        }
+
+        // ==================== DETAIL PAGE ====================
+        function openDetail(id) {
+            currentPlace = places.find(p => p.id === id);
+            if (!currentPlace) return;
+
+            document.getElementById('detailImage').src = currentPlace.image;
+            document.getElementById('detailName').textContent = currentPlace.name;
+            document.getElementById('detailLocation').textContent = currentPlace.city;
+            document.getElementById('detailPrice').innerHTML = currentPlace.price > 0 ? currentPlace.price + ' <span>دينار/شخص</span>' : '<span>مجاني</span>';
+            document.getElementById('detailRating').innerHTML = currentPlace.rating + ' <i class="fas fa-star" style="font-size: 16px;"></i>';
+            document.getElementById('detailDescription').textContent = currentPlace.description;
+
+            // Direction Map
+            setTimeout(initDetailMap, 100);
+
+            // Best Time
+            document.getElementById('bestTimeContent').textContent = currentPlace.bestTime;
+            document.getElementById('bestTimeMonths').innerHTML = currentPlace.bestMonths.map(m => 
+                `<span class="month-tag">${m}</span>`
+            ).join('');
+
+            // Road Info
+            const roadHeader = document.getElementById('roadInfoHeader');
+            roadHeader.className = 'road-info-header ' + currentPlace.roadDifficulty;
+            document.getElementById('roadInfoTitle').textContent = 
+                currentPlace.roadDifficulty === 'easy' ? 'طريق سهل ومريح' : 
+                currentPlace.roadDifficulty === 'medium' ? 'طريق متوسط - يحتاج حذر' : 
+                'طريق صعب - يحتاج خبرة';
+            document.getElementById('roadInfoDesc').textContent = currentPlace.roadDescription;
+            document.getElementById('roadDistance').textContent = currentPlace.distance + ' كم من عمّان';
+            document.getElementById('roadTime').textContent = currentPlace.time;
+
+            // Booking Links
+            document.getElementById('bookingLinks').innerHTML = currentPlace.bookingLinks.map(link => `
+                <a class="booking-link" href="${link.url}" target="_blank">
+                    <div class="booking-link-icon ${link.icon}">
+                        <i class="fas fa-${link.icon === 'ticket' ? 'ticket-alt' : link.icon === 'hotel' ? 'hotel' : link.icon === 'tour' ? 'hiking' : link.icon === 'pass' ? 'passport' : 'globe'}"></i>
+                    </div>
+                    <div class="booking-link-info">
+                        <div class="booking-link-name">${link.name}</div>
+                        <div class="booking-link-desc">${link.desc}</div>
+                    </div>
+                    <div class="booking-link-arrow">
+                        <i class="fas fa-external-link-alt"></i>
+                    </div>
+                </a>
+            `).join('');
+
+            // Tags
+            const categoryNames = {
+                historical: 'أثرية',
+                nature: 'طبيعية',
+                religious: 'دينية',
+                adventure: 'مغامرات',
+                sea: 'بحرية'
+            };
+            document.getElementById('detailTags').innerHTML = `
+                <div class="detail-tag">${categoryNames[currentPlace.category]}</div>
+                <div class="detail-tag"><i class="fas fa-star"></i> ${currentPlace.rating}</div>
+                <div class="detail-tag"><i class="fas fa-road"></i> ${currentPlace.roadDifficulty === 'easy' ? 'سهل' : currentPlace.roadDifficulty === 'medium' ? 'متوسط' : 'صعب'}</div>
+                <div class="detail-tag"><i class="fas fa-calendar"></i> ${currentPlace.bestMonths.length} أشهر مثالية</div>
+                ${currentPlace.price === 0 ? '<div class="detail-tag">مجاني</div>' : ''}
+            `;
+
+            // Features
+            document.getElementById('detailFeatures').innerHTML = currentPlace.features.map(f => `
+                <div class="feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    ${f}
+                </div>
+            `).join('');
+
+            // Gallery
+            document.getElementById('detailGallery').innerHTML = currentPlace.gallery.map(img => `
+                <div class="gallery-item">
+                    <img src="${img}" loading="lazy">
+                </div>
+            `).join('');
+
+            // Show edit/delete buttons
+            const editBtn = document.getElementById('detailEditBtn');
+            const deleteBtn = document.getElementById('detailDeleteBtn');
+            if (isAdmin || currentPlace.isCustom) {
+                editBtn.style.display = 'flex';
+                deleteBtn.style.display = 'flex';
+            } else {
+                editBtn.style.display = 'none';
+                deleteBtn.style.display = 'none';
+            }
+
+            document.getElementById('detailPage').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDetail() {
+            document.getElementById('detailPage').classList.remove('active');
+            document.body.style.overflow = '';
+            if (detailMap) {
+                detailMap.remove();
+                detailMap = null;
+            }
+            currentPlace = null;
+        }
+
+        function sharePlace() {
+            if (navigator.share) {
+                navigator.share({
+                    title: currentPlace.name,
+                    text: currentPlace.description,
+                    url: window.location.href
+                });
+            } else {
+                showToast('تم نسخ رابط الموقع');
+            }
+        }
+
+        function bookPlace() {
+            showToast('جاري تحويلك لصفحة الحجز...');
+        }
+
+        // ==================== ADD/EDIT/DELETE ====================
+        let selectedImage = null;
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImage = e.target.result;
+                    document.getElementById('previewImg').src = selectedImage;
+                    document.getElementById('previewImg').style.display = 'block';
+                    document.getElementById('imagePreview').classList.add('has-image');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function savePlace(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('placeId').value;
+            const name = document.getElementById('placeName').value;
+            const city = document.getElementById('placeCity').value;
+            const category = document.getElementById('placeCategory').value;
+            const price = parseFloat(document.getElementById('placePrice').value);
+            const rating = parseFloat(document.getElementById('placeRating').value);
+            const roadDifficulty = document.getElementById('placeRoadDifficulty').value;
+            const distance = parseFloat(document.getElementById('placeDistance').value);
+            const time = document.getElementById('placeTime').value;
+            const bestTime = document.getElementById('placeBestTime').value;
+            const description = document.getElementById('placeDescription').value;
+            const features = document.getElementById('placeFeatures').value.split(',').map(f => f.trim()).filter(f => f);
+
+            const image = selectedImage || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800';
+
+            const lat = id ? (places.find(p => p.id == id)?.lat || 31.5 + (Math.random() - 0.5)) : 31.5 + (Math.random() - 0.5);
+            const lng = id ? (places.find(p => p.id == id)?.lng || 36.0 + (Math.random() - 0.5)) : 36.0 + (Math.random() - 0.5);
+
+            if (id) {
+                const index = places.findIndex(p => p.id == id);
+                if (index !== -1) {
+                    places[index] = {
+                        ...places[index],
+                        name, city, category, price, rating, roadDifficulty, distance, time, bestTime,
+                        description, features, lat, lng,
+                        image: selectedImage || places[index].image
+                    };
+                    showToast('تم تعديل الموقع بنجاح');
+                }
+            } else {
+                const newPlace = {
+                    id: Date.now(),
+                    name, city, category, price, rating, roadDifficulty, distance, time, bestTime,
+                    description, features, image, lat, lng,
+                    gallery: [image],
+                    isCustom: true,
+                    roadDescription: 'طريق جديد - يُنصح بالاستفسار محلياً',
+                    bestMonths: bestTime.split('-').map(s => s.trim()).filter(s => s),
+                    bookingLinks: [
+                        { name: "حجز مباشر", url: "#", icon: "ticket", desc: "رابط الحجز الرسمي" }
+                    ]
+                };
+                places.unshift(newPlace);
+                showToast('تم إضافة الموقع بنجاح');
+            }
+
+            closeModal();
+            renderPlaces();
+            renderFeatured();
+            renderRoutesList();
+            updateStats();
+
+            if (map) {
+                markers.forEach(m => map.removeLayer(m));
+                markers = [];
+                places.forEach(place => {
+                    const color = place.roadDifficulty === 'easy' ? '#27ae60' : 
+                                 place.roadDifficulty === 'medium' ? '#f39c12' : '#e74c3c';
+                    const marker = L.circleMarker([place.lat, place.lng], {
+                        radius: 12,
+                        fillColor: color,
+                        color: '#fff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    }).addTo(map);
+
+                    const popupContent = `
+                        <div class="popup-content" onclick="openDetail(${place.id})">
+                            <img src="${place.image}" alt="${place.name}">
+                            <div class="popup-title">${place.name}</div>
+                            <div class="popup-price">${place.price > 0 ? place.price + ' دينار' : 'مجاني'}</div>
+                        </div>
+                    `;
+                    marker.bindPopup(popupContent);
+                    markers.push(marker);
+                });
+            }
+        }
+
+        function editCurrentPlace() {
+            if (!currentPlace) return;
+
+            document.getElementById('modalTitle').textContent = 'تعديل الموقع';
+            document.getElementById('placeId').value = currentPlace.id;
+            document.getElementById('placeName').value = currentPlace.name;
+            document.getElementById('placeCity').value = currentPlace.city;
+            document.getElementById('placeCategory').value = currentPlace.category;
+            document.getElementById('placePrice').value = currentPlace.price;
+            document.getElementById('placeRating').value = currentPlace.rating;
+            document.getElementById('placeRoadDifficulty').value = currentPlace.roadDifficulty;
+            document.getElementById('placeDistance').value = currentPlace.distance;
+            document.getElementById('placeTime').value = currentPlace.time;
+            document.getElementById('placeBestTime').value = currentPlace.bestTime || '';
+            document.getElementById('placeDescription').value = currentPlace.description;
+            document.getElementById('placeFeatures').value = currentPlace.features.join(', ');
+
+            document.getElementById('previewImg').src = currentPlace.image;
+            document.getElementById('previewImg').style.display = 'block';
+            document.getElementById('imagePreview').classList.add('has-image');
+            selectedImage = currentPlace.image;
+
+            closeDetail();
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function deleteCurrentPlace() {
+            if (!currentPlace) return;
+            deleteTargetId = currentPlace.id;
+            closeDetail();
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            deleteTargetId = null;
+        }
+
+        function confirmDelete() {
+            if (deleteTargetId) {
+                places = places.filter(p => p.id != deleteTargetId);
+                favorites = favorites.filter(p => p.id != deleteTargetId);
+                showToast('تم حذف الموقع بنجاح');
+                renderPlaces();
+                renderFeatured();
+                renderRoutesList();
+                renderFavorites();
+                updateStats();
+            }
+            closeDeleteModal();
+        }
+
+        // ==================== UTILITIES ====================
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function showAllFeatured() {
+            showToast('عرض جميع المواقع المميزة');
+        }
+
+        function showAllHotels() {
+            showToast('عرض جميع الفنادق');
+        }
+
+        function showProfile() {
+            openProfile();
+        }
+
+        /* ── Notifications System ── */
+        const NOTIF_KEY = 'ardonna_notifications';
+
+        const DEFAULT_NOTIFS = [
+            { id: 1, icon: 'fas fa-hand-wave', color: 'green', msg: 'مرحباً بك في أردننا! 🇯🇴', sub: 'ابدأ باستكشاف أجمل المواقع السياحية في الأردن.', time: 'الآن', read: false },
+            { id: 2, icon: 'fas fa-map-marked-alt', color: 'gold', msg: '20 وجهة سياحية بانتظارك', sub: 'من البتراء إلى وادي رم، اكتشف كنوز الأردن.', time: 'منذ لحظات', read: false },
+            { id: 3, icon: 'fas fa-star', color: 'purple', msg: 'وجهة مميزة: حمامات ماعين', sub: 'الينابيع الساخنة الطبيعية — تجربة لا تُنسى!', time: 'اليوم', read: false },
+            { id: 4, icon: 'fas fa-route', color: 'blue', msg: 'أفضل وقت لزيارة البتراء', sub: 'مارس - مايو وسبتمبر - نوفمبر أنسب الأوقات.', time: 'اليوم', read: false },
+            { id: 5, icon: 'fas fa-tags', color: 'red', msg: 'Jordan Pass - وفّر على تذاكرك', sub: 'يشمل دخول أكثر من 40 موقع سياحي + تأشيرة مجانية.', time: 'أمس', read: true }
+        ];
+
+        function getNotifications() {
+            try {
+                const saved = localStorage.getItem(NOTIF_KEY);
+                if (!saved) {
+                    localStorage.setItem(NOTIF_KEY, JSON.stringify(DEFAULT_NOTIFS));
+                    return DEFAULT_NOTIFS;
+                }
+                return JSON.parse(saved);
+            } catch(e) { return DEFAULT_NOTIFS; }
+        }
+
+        function saveNotifications(notifs) {
+            localStorage.setItem(NOTIF_KEY, JSON.stringify(notifs));
+        }
+
+        function getUnreadCount() {
+            return getNotifications().filter(n => !n.read).length;
+        }
+
+        function updateNotifBadge() {
+            const count = getUnreadCount();
+            const badge = document.getElementById('notif-badge');
+            if (!badge) return;
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.add('show');
+            } else {
+                badge.classList.remove('show');
+            }
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById('notif-list-inner');
+            if (!list) return;
+            const notifs = getNotifications();
+            if (!notifs.length) {
+                list.innerHTML = '<div class="notif-empty"><i class="fas fa-bell-slash"></i><p>لا توجد إشعارات</p></div>';
+                return;
+            }
+            list.innerHTML = notifs.map(n => `
+                <div class="notif-item ${n.read ? 'read' : ''}" id="notif-${n.id}">
+                    <div class="notif-icon-wrap ${n.color}"><i class="${n.icon}"></i></div>
+                    <div class="notif-body">
+                        <div class="notif-msg">${n.msg}</div>
+                        <div class="notif-sub">${n.sub}</div>
+                        <div class="notif-time">${n.time}</div>
+                    </div>
+                    ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}
+                    <button class="notif-delete-btn" onclick="deleteNotif(${n.id})"><i class="fas fa-times"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function showNotifications() {
+            const panel = document.getElementById('notif-panel');
+            panel.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            markAllRead();
+            renderNotifications();
+        }
+
+        function closeNotifPanel() {
+            document.getElementById('notif-panel').classList.remove('active');
+            document.body.style.overflow = '';
+            updateNotifBadge();
+        }
+
+        function markAllRead() {
+            const notifs = getNotifications().map(n => ({ ...n, read: true }));
+            saveNotifications(notifs);
+            updateNotifBadge();
+        }
+
+        function deleteNotif(id) {
+            const notifs = getNotifications().filter(n => n.id !== id);
+            saveNotifications(notifs);
+            renderNotifications();
+            updateNotifBadge();
+        }
+
+        function clearAllNotifs() {
+            saveNotifications([]);
+            renderNotifications();
+            updateNotifBadge();
+        }
+
+        function addNotification(icon, color, msg, sub) {
+            const notifs = getNotifications();
+            const newId = Date.now();
+            notifs.unshift({ id: newId, icon, color, msg, sub, time: 'الآن', read: false });
+            saveNotifications(notifs);
+            updateNotifBadge();
+        }
+
+        function showHotelDetail(id) {
+            const hotel = hotels.find(h => h.id === id);
+            if (hotel) {
+                showToast(`فندق: ${hotel.name} - ${hotel.price} دينار/ليلة`);
+            }
+        }
+
+        // Init notifications badge on load
+        window.addEventListener('DOMContentLoaded', function() {
+            updateNotifBadge();
+        });
+
+        // Close modals on outside click
+        document.getElementById('modalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteModal();
+        });
+
+        document.getElementById('passwordModal').addEventListener('click', function(e) {
+            if (e.target === this) document.getElementById('passwordModal').classList.remove('active');
+        });
+
+        // Notifications panel backdrop click — runs after DOM is ready
+        window.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('notif-panel').addEventListener('click', function(e) {
+                if (e.target.classList.contains('notif-backdrop')) closeNotifPanel();
+            });
+        });
+
+        // Swipe to go back on detail page
+        let touchStartX = 0;
+        document.getElementById('detailPage').addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.getElementById('detailPage').addEventListener('touchend', function(e) {
+            const touchEndX = e.changedTouches[0].screenX;
+            if (touchEndX > touchStartX + 100) {
+                closeDetail();
+            }
+        });
+    </script>
+    <!-- Notifications Panel -->
+    <div id="notif-panel">
+        <div class="notif-backdrop"></div>
+        <div class="notif-sheet">
+            <div class="notif-header">
+                <div class="notif-title"><i class="fas fa-bell" style="margin-left:8px"></i> الإشعارات</div>
+                <div class="notif-header-actions">
+                    <button class="notif-mark-all" onclick="clearAllNotifs()">مسح الكل</button>
+                    <button class="notif-close-btn" onclick="closeNotifPanel()"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="notif-list" id="notif-list-inner"></div>
+        </div>
+    </div>
+
+</body>
+</html>
